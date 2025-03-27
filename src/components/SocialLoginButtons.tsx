@@ -2,8 +2,7 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { GitHubLogoIcon } from '@radix-ui/react-icons';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Github } from 'lucide-react';
 
 interface SocialLoginButtonsProps {
   isLoading: boolean;
@@ -75,7 +74,7 @@ const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({ isLoading }) =>
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <>
-            <GitHubLogoIcon className="h-4 w-4" />
+            <Github className="h-4 w-4" />
             Continue with GitHub
           </>
         )}

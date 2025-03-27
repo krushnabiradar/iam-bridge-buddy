@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
+const axios = require('axios');
 
 // Helper to generate JWT
 const generateToken = (user) => {
@@ -199,24 +200,66 @@ exports.ssoLogin = async (req, res) => {
   try {
     const { token } = req.body;
     
-    // In a real implementation, you would verify the SSO token with the identity provider
-    // For now, we'll simulate a successful verification
+    if (!token) {
+      return res.status(400).json({ message: 'SSO token is required' });
+    }
     
+    let userData;
+    
+    // Verify the SSO token with the identity provider
+    try {
+      // This is where you would make a request to your SSO provider to verify the token
+      // The exact implementation depends on your SSO provider's API
+      const response = await axios.post(
+        `${process.env.SSO_PROVIDER_URL}/verify-token`,
+        { token },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${Buffer.from(
+              `${process.env.SSO_CLIENT_ID}:${process.env.SSO_CLIENT_SECRET}`
+            ).toString('base64')}`
+          }
+        }
+      );
+      
+      // If the verification is successful, the response should contain user data
+      userData = response.data;
+      
+      // If verification fails, the request will throw an error, which is caught below
+    } catch (verificationError) {
+      console.error('SSO token verification failed:', verificationError);
+      
+      // For development/testing purposes, we'll fallback to mock data
+      // REMOVE THIS IN PRODUCTION
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Using mock SSO data for development');
+        userData = {
+          name: 'SSO Test User',
+          email: 'sso-user@example.com',
+          organization: 'Test Organization'
+        };
+      } else {
+        return res.status(401).json({ 
+          message: 'SSO token verification failed', 
+          error: verificationError.message 
+        });
+      }
+    }
+    
+    if (!userData || !userData.email) {
+      return res.status(400).json({ message: 'Invalid SSO data: email is required' });
+    }
+
     // Find or create user based on SSO data
-    // This is a simplified implementation
-    const ssoData = {
-      name: 'SSO User',
-      email: 'user@organization.com'
-    };
-    
-    let user = await User.findOne({ email: ssoData.email });
+    let user = await User.findOne({ email: userData.email });
     
     if (!user) {
       // Create new user
       user = new User({
-        name: ssoData.name,
-        email: ssoData.email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(ssoData.name)}&background=random`,
+        name: userData.name || 'SSO User',
+        email: userData.email,
+        avatar: userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'SSO User')}&background=random`,
         socialProvider: 'SSO'
       });
       

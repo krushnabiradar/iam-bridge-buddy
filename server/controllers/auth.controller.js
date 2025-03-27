@@ -136,24 +136,103 @@ exports.socialLogin = async (req, res) => {
   try {
     const { provider, token, userData } = req.body;
     
-    // In a real implementation, you would verify the token with the provider
-    // For now, we'll assume the token is valid and the user data is correct
+    if (!token) {
+      return res.status(400).json({ message: 'Authentication token is required' });
+    }
     
-    if (!userData || !userData.email) {
-      return res.status(400).json({ message: 'Email is required' });
+    let verifiedUserData;
+    
+    // Verify the token with the provider
+    try {
+      switch (provider.toLowerCase()) {
+        case 'google':
+          // Verify Google token
+          const googleResponse = await axios.get(
+            `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${token}`
+          );
+          
+          if (googleResponse.data.error_description) {
+            throw new Error(googleResponse.data.error_description);
+          }
+          
+          verifiedUserData = {
+            id: googleResponse.data.sub,
+            name: googleResponse.data.name,
+            email: googleResponse.data.email,
+            avatar: googleResponse.data.picture
+          };
+          break;
+          
+        case 'github':
+          // Verify GitHub token and get user info
+          const githubUserResponse = await axios.get('https://api.github.com/user', {
+            headers: {
+              Authorization: `token ${token}`
+            }
+          });
+          
+          // GitHub doesn't always return email in the user endpoint, so we may need to fetch emails separately
+          let email = githubUserResponse.data.email;
+          
+          if (!email) {
+            const githubEmailsResponse = await axios.get('https://api.github.com/user/emails', {
+              headers: {
+                Authorization: `token ${token}`
+              }
+            });
+            
+            // Find the primary email
+            const primaryEmail = githubEmailsResponse.data.find(email => email.primary);
+            email = primaryEmail ? primaryEmail.email : githubEmailsResponse.data[0].email;
+          }
+          
+          verifiedUserData = {
+            id: githubUserResponse.data.id.toString(),
+            name: githubUserResponse.data.name || githubUserResponse.data.login,
+            email: email,
+            avatar: githubUserResponse.data.avatar_url
+          };
+          break;
+          
+        default:
+          // For development/testing purposes
+          if (process.env.NODE_ENV !== 'production' && userData) {
+            console.log(`Using provided userData for ${provider} in development`);
+            verifiedUserData = userData;
+          } else {
+            return res.status(400).json({ message: `Unsupported provider: ${provider}` });
+          }
+      }
+    } catch (verificationError) {
+      console.error(`${provider} token verification failed:`, verificationError);
+      
+      // For development/testing purposes
+      if (process.env.NODE_ENV !== 'production' && userData) {
+        console.log(`Using provided userData for ${provider} in development`);
+        verifiedUserData = userData;
+      } else {
+        return res.status(401).json({ 
+          message: `${provider} token verification failed`, 
+          error: verificationError.message 
+        });
+      }
+    }
+    
+    if (!verifiedUserData || !verifiedUserData.email) {
+      return res.status(400).json({ message: 'Invalid authentication data: email is required' });
     }
 
     // Find or create user
-    let user = await User.findOne({ email: userData.email });
+    let user = await User.findOne({ email: verifiedUserData.email });
     
     if (!user) {
       // Create new user
       user = new User({
-        name: userData.name || `${provider} User`,
-        email: userData.email,
-        avatar: userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || provider + ' User')}&background=random`,
+        name: verifiedUserData.name || `${provider} User`,
+        email: verifiedUserData.email,
+        avatar: verifiedUserData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(verifiedUserData.name || provider + ' User')}&background=random`,
         socialProvider: provider,
-        socialId: userData.id
+        socialId: verifiedUserData.id
       });
       
       await user.save();
@@ -161,7 +240,7 @@ exports.socialLogin = async (req, res) => {
       // Update social provider info if not already set
       if (!user.socialProvider) {
         user.socialProvider = provider;
-        user.socialId = userData.id;
+        user.socialId = verifiedUserData.id;
         await user.save();
       }
     }

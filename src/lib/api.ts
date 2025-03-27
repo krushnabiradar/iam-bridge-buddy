@@ -70,10 +70,10 @@ export const api = {
       }),
     logout: () => 
       apiRequest('/auth/logout', { method: 'POST' }),
-    socialLogin: (provider: string, userData: any) => 
+    socialLogin: (provider: string, token?: string, userData?: any) => 
       apiRequest('/auth/social', { 
         method: 'POST', 
-        body: { provider, userData } 
+        body: { provider, token, userData } 
       }),
     ssoLogin: (token: string) => 
       apiRequest('/auth/sso', { 

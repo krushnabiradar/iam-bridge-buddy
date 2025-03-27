@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from "sonner";
+import { api } from '@/lib/api';
 
 interface User {
   id: string;
@@ -17,7 +18,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  socialLogin: (provider: string) => Promise<void>;
+  socialLogin: (provider: string, userData: any, token?: string) => Promise<void>;
   ssoLogin: (token: string) => Promise<void>;
 }
 
@@ -32,11 +33,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       try {
         const storedUser = localStorage.getItem('iam-user');
-        if (storedUser) {
+        const token = localStorage.getItem('auth-token');
+        
+        if (storedUser && token) {
+          // In a real app, we would validate the token with the server here
           setUser(JSON.parse(storedUser));
         }
       } catch (error) {
         console.error('Authentication check failed:', error);
+        localStorage.removeItem('iam-user');
+        localStorage.removeItem('auth-token');
       } finally {
         setIsLoading(false);
       }
@@ -48,20 +54,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await api.auth.login(email, password);
       
-      // In a real app, this would verify credentials with a backend
-      const mockUser = {
-        id: '1',
-        name: 'John Doe',
-        email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent('John Doe')}&background=random`,
-        role: 'user'
-      };
+      setUser(response.user);
+      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      localStorage.setItem('auth-token', response.token);
       
-      setUser(mockUser);
-      localStorage.setItem('iam-user', JSON.stringify(mockUser));
       toast.success("Logged in successfully");
     } catch (error) {
       console.error('Login failed:', error);
@@ -75,20 +73,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await api.auth.register(name, email, password);
       
-      // In a real app, this would create a user in the database
-      const mockUser = {
-        id: '1',
-        name,
-        email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-        role: 'user'
-      };
+      setUser(response.user);
+      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      localStorage.setItem('auth-token', response.token);
       
-      setUser(mockUser);
-      localStorage.setItem('iam-user', JSON.stringify(mockUser));
       toast.success("Account created successfully");
     } catch (error) {
       console.error('Registration failed:', error);
@@ -99,23 +89,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const socialLogin = async (provider: string) => {
+  const socialLogin = async (provider: string, userData: any, token?: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await api.auth.socialLogin(provider, token, userData);
       
-      // In a real app, this would authenticate with the provider
-      const mockUser = {
-        id: '1',
-        name: `${provider} User`,
-        email: `user@${provider.toLowerCase()}.com`,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(`${provider} User`)}&background=random`,
-        role: 'user'
-      };
+      setUser(response.user);
+      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      localStorage.setItem('auth-token', response.token);
       
-      setUser(mockUser);
-      localStorage.setItem('iam-user', JSON.stringify(mockUser));
       toast.success(`Logged in with ${provider} successfully`);
     } catch (error) {
       console.error(`${provider} login failed:`, error);
@@ -129,20 +111,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const ssoLogin = async (token: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await api.auth.ssoLogin(token);
       
-      // In a real app, this would verify the SSO token with the identity provider
-      const mockUser = {
-        id: '1',
-        name: 'SSO User',
-        email: 'user@organization.com',
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent('SSO User')}&background=random`,
-        role: 'user'
-      };
+      setUser(response.user);
+      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      localStorage.setItem('auth-token', response.token);
       
-      setUser(mockUser);
-      localStorage.setItem('iam-user', JSON.stringify(mockUser));
       toast.success("SSO login successful");
     } catch (error) {
       console.error('SSO login failed:', error);
@@ -153,10 +127,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('iam-user');
-    toast.success("Logged out successfully");
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await api.auth.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem('iam-user');
+      localStorage.removeItem('auth-token');
+      toast.success("Logged out successfully");
+      setIsLoading(false);
+    }
   };
 
   return (

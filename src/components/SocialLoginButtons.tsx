@@ -2,20 +2,81 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Github } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/lib/api';
+import { toast } from "sonner";
 
 interface SocialLoginButtonsProps {
   isLoading: boolean;
 }
 
 const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({ isLoading }) => {
-  const handleGoogleLogin = () => {
+  const { socialLogin } = useAuth();
+
+  // Server-side OAuth flow
+  const handleGoogleLoginServerFlow = () => {
     window.location.href = `${API_BASE_URL}/auth/google`;
   };
 
-  const handleGitHubLogin = () => {
+  const handleGitHubLoginServerFlow = () => {
     window.location.href = `${API_BASE_URL}/auth/github`;
   };
+
+  // Client-side OAuth flow - examples for development/testing
+  const handleGoogleLoginClientFlow = async () => {
+    try {
+      // In a real implementation, this would use something like Google Sign-In API
+      // to get an auth token and then pass that to the backend
+      console.log("This would normally trigger Google's OAuth popup");
+      
+      // Mock implementation for development
+      if (process.env.NODE_ENV !== 'production') {
+        const mockUserData = {
+          id: '123456789',
+          name: 'Google Test User',
+          email: 'google-user@example.com',
+          avatar: 'https://ui-avatars.com/api/?name=Google+User&background=random'
+        };
+        
+        await socialLogin('Google', mockUserData);
+      }
+    } catch (error) {
+      console.error('Google login failed:', error);
+      toast.error('Google login failed. Please try again.');
+    }
+  };
+
+  const handleGitHubLoginClientFlow = async () => {
+    try {
+      // In a real implementation, this would use GitHub's OAuth libraries
+      // to get an auth token and then pass that to the backend
+      console.log("This would normally trigger GitHub's OAuth popup");
+      
+      // Mock implementation for development
+      if (process.env.NODE_ENV !== 'production') {
+        const mockUserData = {
+          id: '987654321',
+          name: 'GitHub Test User',
+          email: 'github-user@example.com',
+          avatar: 'https://ui-avatars.com/api/?name=GitHub+User&background=random'
+        };
+        
+        await socialLogin('GitHub', mockUserData);
+      }
+    } catch (error) {
+      console.error('GitHub login failed:', error);
+      toast.error('GitHub login failed. Please try again.');
+    }
+  };
+
+  // Use server-side flow for production, client-side flow for development
+  const handleGoogleLogin = process.env.NODE_ENV === 'production' 
+    ? handleGoogleLoginServerFlow 
+    : handleGoogleLoginClientFlow;
+
+  const handleGitHubLogin = process.env.NODE_ENV === 'production' 
+    ? handleGitHubLoginServerFlow 
+    : handleGitHubLoginClientFlow;
 
   return (
     <div className="flex flex-col gap-3 w-full">

@@ -1,4 +1,3 @@
-
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
@@ -103,7 +102,35 @@ exports.login = async (req, res) => {
   }
 };
 
-// Social login
+// Social authentication callback handler (for Passport.js OAuth flow)
+exports.socialAuthCallback = (req, res) => {
+  try {
+    // User is already authenticated and added to req by Passport
+    const user = req.user;
+    
+    if (!user) {
+      return res.redirect(`${process.env.CLIENT_URL}/auth?error=Authentication failed`);
+    }
+    
+    // Generate JWT
+    const token = generateToken(user);
+    
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+    
+    // Redirect to the client app with success
+    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+  } catch (error) {
+    console.error('Social auth callback error:', error);
+    res.redirect(`${process.env.CLIENT_URL}/auth?error=${encodeURIComponent(error.message)}`);
+  }
+};
+
+// Social login (for direct API calls from frontend)
 exports.socialLogin = async (req, res) => {
   try {
     const { provider, token, userData } = req.body;
@@ -227,6 +254,11 @@ exports.ssoLogin = async (req, res) => {
 
 // Logout user
 exports.logout = (req, res) => {
-  res.clearCookie('token');
-  res.status(200).json({ message: 'Logged out successfully' });
+  req.logout((err) => {
+    if (err) {
+      console.error('Logout error:', err);
+    }
+    res.clearCookie('token');
+    res.status(200).json({ message: 'Logged out successfully' });
+  });
 };

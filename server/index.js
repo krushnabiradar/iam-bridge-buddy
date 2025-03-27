@@ -4,6 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
+const session = require('express-session');
+const passport = require('./config/passport');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 
@@ -17,6 +19,22 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:8080',
   credentials: true
 }));
+
+// Configure session
+app.use(session({
+  secret: process.env.SESSION_SECRET || process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Routes
 app.use('/api/auth', authRoutes);

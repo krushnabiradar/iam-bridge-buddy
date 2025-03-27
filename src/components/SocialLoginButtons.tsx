@@ -1,30 +1,20 @@
 
 import React from 'react';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Loader2, Github } from 'lucide-react';
+import { API_BASE_URL } from '@/lib/api';
 
 interface SocialLoginButtonsProps {
   isLoading: boolean;
 }
 
 const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({ isLoading }) => {
-  const { socialLogin } = useAuth();
-
-  const handleGoogleLogin = async () => {
-    try {
-      await socialLogin('Google');
-    } catch (error) {
-      console.error('Google login error:', error);
-    }
+  const handleGoogleLogin = () => {
+    window.location.href = `${API_BASE_URL}/auth/google`;
   };
 
-  const handleGitHubLogin = async () => {
-    try {
-      await socialLogin('GitHub');
-    } catch (error) {
-      console.error('GitHub login error:', error);
-    }
+  const handleGitHubLogin = () => {
+    window.location.href = `${API_BASE_URL}/auth/github`;
   };
 
   return (

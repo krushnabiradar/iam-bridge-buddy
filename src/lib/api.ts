@@ -1,20 +1,25 @@
 
-// This is a placeholder for real API implementation
-// In a real app, this would interact with your backend
+// API utility for interacting with the backend
 
-export const API_BASE_URL = 'https://api.example.com';
+export const API_BASE_URL = 'http://localhost:5000/api';
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: any;
   headers?: Record<string, string>;
+  credentials?: RequestCredentials;
 }
 
 export async function apiRequest<T>(
   endpoint: string,
   options: ApiOptions = {}
 ): Promise<T> {
-  const { method = 'GET', body, headers = {} } = options;
+  const { 
+    method = 'GET', 
+    body, 
+    headers = {},
+    credentials = 'include' 
+  } = options;
 
   const defaultHeaders = {
     'Content-Type': 'application/json',
@@ -27,18 +32,24 @@ export async function apiRequest<T>(
   }
 
   try {
-    // In a real implementation, this would make an actual API call
-    // For demo purposes, we're just simulating with timeouts and mock data
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log(`API call to ${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method,
+      headers: { ...defaultHeaders, ...headers },
       body: body ? JSON.stringify(body) : undefined,
-      headers: { ...defaultHeaders, ...headers }
+      credentials
     });
-    
-    // Simulate a successful response
-    return { success: true } as unknown as T;
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'API request failed');
+    }
+
+    // For DELETE requests that might not return content
+    if (method === 'DELETE' && response.status === 204) {
+      return { success: true } as unknown as T;
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
@@ -59,10 +70,10 @@ export const api = {
       }),
     logout: () => 
       apiRequest('/auth/logout', { method: 'POST' }),
-    socialLogin: (provider: string, token: string) => 
+    socialLogin: (provider: string, userData: any) => 
       apiRequest('/auth/social', { 
         method: 'POST', 
-        body: { provider, token } 
+        body: { provider, userData } 
       }),
     ssoLogin: (token: string) => 
       apiRequest('/auth/sso', { 

@@ -1,7 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { api, AuthResponse, extractAuthFromUrl } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 interface User {
   id: string;
@@ -9,6 +11,7 @@ interface User {
   email: string;
   avatar?: string;
   role?: string;
+  lastLogin?: string; // Add lastLogin to the User interface
 }
 
 interface AuthContextType {

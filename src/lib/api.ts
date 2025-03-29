@@ -19,6 +19,7 @@ export interface AuthResponse {
     email: string;
     avatar?: string;
     role?: string;
+    lastLogin?: string; // Add lastLogin to the AuthResponse
   };
   token: string;
 }

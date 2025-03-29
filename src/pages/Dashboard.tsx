@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import NavBar from '@/components/NavBar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { format } from 'date-fns';
 import { 
   Shield, 
   Key, 
@@ -32,6 +33,20 @@ const Dashboard = () => {
       .join('')
       .toUpperCase()
       .substring(0, 2);
+  };
+
+  // Format the last login time or use a placeholder if not available
+  const formatLastLogin = () => {
+    if (user?.lastLogin) {
+      try {
+        const lastLoginDate = new Date(user.lastLogin);
+        return format(lastLoginDate, 'PPpp'); // Format: Jan 1, 2021, 12:00 PM
+      } catch (error) {
+        console.error('Error formatting last login date:', error);
+        return 'Recently';
+      }
+    }
+    return 'Recently';
   };
 
   const featureCards = [
@@ -84,7 +99,7 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-primary/5 rounded-lg p-4">
                     <h3 className="font-medium">Last Login</h3>
-                    <p className="text-sm text-muted-foreground">Today, 10:30 AM</p>
+                    <p className="text-sm text-muted-foreground">{formatLastLogin()}</p>
                   </div>
                   <div className="bg-primary/5 rounded-lg p-4">
                     <h3 className="font-medium">Account Status</h3>

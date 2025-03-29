@@ -128,7 +128,8 @@ exports.socialAuthCallback = (req, res) => {
       name: user.name,
       email: user.email,
       avatar: user.avatar,
-      role: user.role
+      role: user.role,
+      lastLogin: user.lastLogin // Include lastLogin
     };
     
     // Include token and user data in the URL for the frontend to process
@@ -275,7 +276,7 @@ exports.logout = (req, res) => {
   });
 };
 
-// Verify token endpoint (new endpoint)
+// Verify token endpoint
 exports.verifyToken = (req, res) => {
   try {
     const user = req.user;
@@ -284,13 +285,14 @@ exports.verifyToken = (req, res) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
     
-    // Return user data
+    // Return user data including lastLogin
     const userData = {
       id: user._id,
       name: user.name,
       email: user.email,
       avatar: user.avatar,
-      role: user.role
+      role: user.role,
+      lastLogin: user.lastLogin
     };
     
     res.status(200).json({

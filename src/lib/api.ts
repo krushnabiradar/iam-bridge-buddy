@@ -10,6 +10,19 @@ interface ApiOptions {
   credentials?: RequestCredentials;
 }
 
+// Define response types
+export interface AuthResponse {
+  message: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+    role?: string;
+  };
+  token: string;
+}
+
 export async function apiRequest<T>(
   endpoint: string,
   options: ApiOptions = {}
@@ -59,24 +72,24 @@ export async function apiRequest<T>(
 export const api = {
   auth: {
     login: (email: string, password: string) => 
-      apiRequest('/auth/login', { 
+      apiRequest<AuthResponse>('/auth/login', { 
         method: 'POST', 
         body: { email, password } 
       }),
     register: (name: string, email: string, password: string) => 
-      apiRequest('/auth/register', { 
+      apiRequest<AuthResponse>('/auth/register', { 
         method: 'POST', 
         body: { name, email, password } 
       }),
     logout: () => 
       apiRequest('/auth/logout', { method: 'POST' }),
     socialLogin: (provider: string, userData: any) => 
-      apiRequest('/auth/social', { 
+      apiRequest<AuthResponse>('/auth/social', { 
         method: 'POST', 
         body: { provider, userData } 
       }),
     ssoLogin: (token: string) => 
-      apiRequest('/auth/sso', { 
+      apiRequest<AuthResponse>('/auth/sso', { 
         method: 'POST', 
         body: { token } 
       }),

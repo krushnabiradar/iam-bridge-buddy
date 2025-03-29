@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from "sonner";
+import { api, AuthResponse } from '@/lib/api';
 
 interface User {
   id: string;
@@ -48,20 +49,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // In a real implementation, this would be an API call
+      // The mock implementation will be used for now
+      const response = await api.auth.login(email, password);
       
-      // In a real app, this would verify credentials with a backend
-      const mockUser = {
-        id: '1',
-        name: 'John Doe',
-        email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent('John Doe')}&background=random`,
-        role: 'user'
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('iam-user', JSON.stringify(mockUser));
+      // Use typed response
+      setUser(response.user);
+      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      localStorage.setItem('auth-token', response.token);
       toast.success("Logged in successfully");
     } catch (error) {
       console.error('Login failed:', error);
@@ -75,20 +70,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // In a real implementation, this would be an API call
+      // The mock implementation will be used for now
+      const response = await api.auth.register(name, email, password);
       
-      // In a real app, this would create a user in the database
-      const mockUser = {
-        id: '1',
-        name,
-        email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-        role: 'user'
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('iam-user', JSON.stringify(mockUser));
+      // Use typed response
+      setUser(response.user);
+      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      localStorage.setItem('auth-token', response.token);
       toast.success("Account created successfully");
     } catch (error) {
       console.error('Registration failed:', error);
@@ -102,20 +91,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const socialLogin = async (provider: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real app, this would authenticate with the provider
-      const mockUser = {
+      // In a real implementation, this would be an API call
+      // For now, simulate a frontend-only flow
+      const mockUserData = {
         id: '1',
         name: `${provider} User`,
-        email: `user@${provider.toLowerCase()}.com`,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(`${provider} User`)}&background=random`,
-        role: 'user'
+        email: `user@${provider.toLowerCase()}.com`
       };
       
-      setUser(mockUser);
-      localStorage.setItem('iam-user', JSON.stringify(mockUser));
+      const response = await api.auth.socialLogin(provider, mockUserData);
+      
+      // Use typed response
+      setUser(response.user);
+      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      localStorage.setItem('auth-token', response.token);
       toast.success(`Logged in with ${provider} successfully`);
     } catch (error) {
       console.error(`${provider} login failed:`, error);
@@ -129,20 +118,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const ssoLogin = async (token: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // In a real implementation, this would be an API call
+      // The mock implementation will be used for now
+      const response = await api.auth.ssoLogin(token);
       
-      // In a real app, this would verify the SSO token with the identity provider
-      const mockUser = {
-        id: '1',
-        name: 'SSO User',
-        email: 'user@organization.com',
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent('SSO User')}&background=random`,
-        role: 'user'
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('iam-user', JSON.stringify(mockUser));
+      // Use typed response
+      setUser(response.user);
+      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      localStorage.setItem('auth-token', response.token);
       toast.success("SSO login successful");
     } catch (error) {
       console.error('SSO login failed:', error);
@@ -156,6 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('iam-user');
+    localStorage.removeItem('auth-token');
     toast.success("Logged out successfully");
   };
 

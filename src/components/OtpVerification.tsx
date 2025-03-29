@@ -102,7 +102,8 @@ const OtpVerification: React.FC<OtpVerificationProps> = ({
     
     setIsLoading(true);
     try {
-      await api.auth.verifyOtp(email, otpString);
+      // Fix: Use the correct method name verifyPasswordResetOtp instead of verifyOtp
+      await api.auth.verifyPasswordResetOtp(email, otpString);
       toast.success('OTP verified successfully');
       onVerified();
     } catch (error) {

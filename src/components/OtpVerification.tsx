@@ -1,15 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { Loader2, CheckCircle, RefreshCw } from 'lucide-react';
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-  InputOTPSeparator
-} from '@/components/ui/input-otp';
+import { toast } from 'sonner';
+import { Loader2, ArrowLeft } from 'lucide-react';
+import { OTP_LENGTH } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
 interface OtpVerificationProps {
   email: string;
@@ -22,19 +19,90 @@ const OtpVerification: React.FC<OtpVerificationProps> = ({
   onVerified,
   onBackToEmail
 }) => {
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
 
-  const handleVerify = async () => {
-    if (!otp || otp.length !== 6) {
-      toast.error('Please enter a valid 6-digit code');
+  useEffect(() => {
+    // Auto focus first input on mount
+    const input = document.getElementById(`otp-input-0`);
+    if (input) {
+      input.focus();
+    }
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const { value } = e.target;
+    if (value === '' || /^[0-9]$/.test(value)) {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+      
+      // Move to next input if value is entered
+      if (value !== '' && index < OTP_LENGTH - 1) {
+        const nextInput = document.getElementById(`otp-input-${index + 1}`);
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    // Move to previous input on backspace if current input is empty
+    if (e.key === 'Backspace' && index > 0 && otp[index] === '') {
+      const prevInput = document.getElementById(`otp-input-${index - 1}`);
+      if (prevInput) {
+        prevInput.focus();
+      }
+    }
+  };
+
+  const handleFocus = (index: number) => {
+    setActiveIndex(index);
+  };
+
+  const renderInput = (index: number) => {
+    const isActive = index === activeIndex;
+    const char = otp[index];
+    const hasFakeCaret = isActive && !char;
+    
+    return (
+      <div key={index} className="relative w-10 h-12">
+        <Input
+          id={`otp-input-${index}`}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={char}
+          onChange={(e) => handleChange(e, index)}
+          onKeyDown={(e) => handleKeyDown(e, index)}
+          onFocus={() => handleFocus(index)}
+          className={cn(
+            "w-full h-full text-center text-xl font-semibold bg-background border rounded-md focus:ring-2 focus:ring-primary focus:border-primary",
+            isActive && "border-primary"
+          )}
+          disabled={isLoading}
+        />
+        {hasFakeCaret && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary animate-caret" />
+        )}
+      </div>
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const otpString = otp.join('');
+    if (otpString.length !== OTP_LENGTH) {
+      toast.error(`Please enter all ${OTP_LENGTH} digits`);
       return;
     }
-
+    
     setIsLoading(true);
     try {
-      await api.auth.verifyPasswordResetOtp(email, otp);
+      await api.auth.verifyOtp(email, otpString);
       toast.success('OTP verified successfully');
       onVerified();
     } catch (error) {
@@ -46,47 +114,47 @@ const OtpVerification: React.FC<OtpVerificationProps> = ({
   };
 
   const handleResendOtp = async () => {
-    setIsResending(true);
+    setIsLoading(true);
     try {
       await api.auth.requestPasswordReset(email);
-      toast.success('A new OTP has been sent to your email');
+      toast.success('New OTP has been sent to your email');
     } catch (error) {
       console.error('Error resending OTP:', error);
       toast.error('Failed to resend OTP. Please try again.');
     } finally {
-      setIsResending(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-4">
-          We've sent a 6-digit code to <span className="font-semibold">{email}</span>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="mb-4 text-muted-foreground hover:text-foreground"
+          onClick={onBackToEmail}
+          disabled={isLoading}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Email
+        </Button>
+        
+        <p className="text-sm text-center mb-6">
+          We've sent a verification code to<br />
+          <span className="font-medium">{email}</span>
         </p>
-        <div className="flex justify-center my-6">
-          <InputOTP
-            maxLength={6}
-            value={otp}
-            onChange={setOtp}
-            render={({ slots }) => (
-              <InputOTPGroup>
-                {slots.map((slot, index) => (
-                  <React.Fragment key={index}>
-                    <InputOTPSlot className="w-10 h-12 text-lg" {...slot} />
-                    {index !== slots.length - 1 && <InputOTPSeparator />}
-                  </React.Fragment>
-                ))}
-              </InputOTPGroup>
-            )}
-          />
+        
+        <div className="flex justify-center space-x-2 mb-2">
+          {Array.from({ length: OTP_LENGTH }).map((_, index) => renderInput(index))}
         </div>
       </div>
-
-      <Button
-        className="w-full"
-        onClick={handleVerify}
-        disabled={isLoading || otp.length !== 6}
+      
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={isLoading}
       >
         {isLoading ? (
           <>
@@ -94,42 +162,23 @@ const OtpVerification: React.FC<OtpVerificationProps> = ({
             Verifying...
           </>
         ) : (
-          <>
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Verify Code
-          </>
+          'Verify OTP'
         )}
       </Button>
-
-      <div className="flex justify-between items-center pt-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBackToEmail}
-          disabled={isLoading || isResending}
-        >
-          Change Email
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
+      
+      <p className="text-center text-sm">
+        Didn't receive the code?{' '}
+        <Button 
+          type="button" 
+          variant="link" 
+          className="p-0 h-auto font-normal"
           onClick={handleResendOtp}
-          disabled={isLoading || isResending}
+          disabled={isLoading}
         >
-          {isResending ? (
-            <>
-              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-              Resending...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="mr-2 h-3 w-3" />
-              Resend Code
-            </>
-          )}
+          Resend
         </Button>
-      </div>
-    </div>
+      </p>
+    </form>
   );
 };
 

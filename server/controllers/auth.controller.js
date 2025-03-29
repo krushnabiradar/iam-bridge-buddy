@@ -1,5 +1,9 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
+const crypto = require('crypto');
+
+// Store OTPs temporarily (in a real app, use Redis or similar)
+const otpStore = new Map();
 
 // Helper to generate JWT
 const generateToken = (user) => {
@@ -8,6 +12,11 @@ const generateToken = (user) => {
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
+};
+
+// Generate a random 6-digit OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 // Register new user
@@ -303,5 +312,112 @@ exports.verifyToken = (req, res) => {
   } catch (error) {
     console.error('Token verification error:', error);
     res.status(401).json({ message: 'Token verification failed', error: error.message });
+  }
+};
+
+// Forgot password - send OTP
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found with this email' });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    
+    // Store OTP with expiry (15 minutes)
+    otpStore.set(email, {
+      otp,
+      expiresAt: Date.now() + 15 * 60 * 1000 // 15 minutes in milliseconds
+    });
+    
+    // In a real app, send the OTP via email
+    console.log(`OTP for ${email}: ${otp}`); // For testing only
+    
+    res.status(200).json({ 
+      message: 'OTP has been sent to your email',
+      // Include OTP in response for testing only (would not do this in production)
+      otp: process.env.NODE_ENV === 'development' ? otp : undefined
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Failed to process request', error: error.message });
+  }
+};
+
+// Verify OTP
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: 'Email and OTP are required' });
+    }
+
+    // Check if OTP exists and is valid
+    const storedOtpData = otpStore.get(email);
+    
+    if (!storedOtpData) {
+      return res.status(400).json({ message: 'OTP not found or expired' });
+    }
+    
+    if (Date.now() > storedOtpData.expiresAt) {
+      otpStore.delete(email);
+      return res.status(400).json({ message: 'OTP has expired' });
+    }
+    
+    if (storedOtpData.otp !== otp) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+    
+    // OTP is valid - don't delete it yet as we'll need to verify the email during password reset
+    
+    res.status(200).json({ message: 'OTP verified successfully' });
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    res.status(500).json({ message: 'Failed to verify OTP', error: error.message });
+  }
+};
+
+// Reset password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    // Ensure OTP was verified
+    const storedOtpData = otpStore.get(email);
+    if (!storedOtpData) {
+      return res.status(400).json({ message: 'Please verify your email with OTP first' });
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update password
+    user.password = password; // Password will be hashed by the pre-save hook
+    await user.save();
+    
+    // Remove OTP from store
+    otpStore.delete(email);
+    
+    res.status(200).json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ message: 'Failed to reset password', error: error.message });
   }
 };

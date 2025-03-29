@@ -14,6 +14,11 @@ router.post('/login', authController.login);
 // Logout user
 router.post('/logout', authController.logout);
 
+// Password reset routes
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/verify-otp', authController.verifyOtp);
+router.post('/reset-password', authController.resetPassword);
+
 // Google OAuth routes
 router.get('/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
@@ -44,3 +49,4 @@ router.post('/sso', authController.ssoLogin);
 router.get('/verify-token', authenticate, authController.verifyToken);
 
 module.exports = router;
+

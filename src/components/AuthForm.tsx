@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import SocialLoginButtons from './SocialLoginButtons';
 import { toast } from "sonner";
+import { Link } from 'react-router-dom';
 
 type AuthMode = 'login' | 'register' | 'sso';
 
@@ -136,13 +137,12 @@ const AuthForm: React.FC = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Button
-                variant="link"
-                className="px-0 text-xs text-muted-foreground"
-                onClick={() => toast.info("Password reset feature would go here")}
+              <Link
+                to="/forgot-password"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
               >
                 Forgot password?
-              </Button>
+              </Link>
             </div>
             <Input
               id="password"

@@ -122,6 +122,22 @@ export const api = {
     // Add a new method to get user profile using the token
     verifyToken: () => 
       apiRequest<AuthResponse>('/auth/verify-token', { method: 'GET' }),
+    // Add password reset endpoints
+    requestPasswordReset: (email: string) => 
+      apiRequest<{ message: string }>('/auth/forgot-password', { 
+        method: 'POST', 
+        body: { email } 
+      }),
+    verifyPasswordResetOtp: (email: string, otp: string) => 
+      apiRequest<{ message: string }>('/auth/verify-otp', { 
+        method: 'POST', 
+        body: { email, otp } 
+      }),
+    resetPassword: (email: string, password: string) => 
+      apiRequest<{ message: string }>('/auth/reset-password', { 
+        method: 'POST', 
+        body: { email, password } 
+      }),
   },
   user: {
     getProfile: () => apiRequest('/user/profile'),
@@ -132,3 +148,4 @@ export const api = {
       }),
   },
 };
+

@@ -146,6 +146,10 @@ export const api = {
         method: 'PUT', 
         body: data 
       }),
+    changePassword: (currentPassword: string, newPassword: string) =>
+      apiRequest<{ message: string }>('/user/change-password', {
+        method: 'POST',
+        body: { currentPassword, newPassword }
+      }),
   },
 };
-

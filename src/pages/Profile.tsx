@@ -9,16 +9,28 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "sonner";
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, Lock, Eye, EyeOff } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { api } from '@/lib/api';
 
 const Profile = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateUserData } = useAuth();
   const navigate = useNavigate();
   
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Password change states
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
   
   React.useEffect(() => {
     if (!isAuthenticated) {
@@ -30,16 +42,54 @@ const Profile = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await api.user.updateProfile({ name, email });
+      updateUserData(response.user);
       toast.success("Profile updated successfully");
       setIsEditing(false);
     } catch (error) {
+      console.error('Update profile error:', error);
       toast.error("Failed to update profile");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords don't match");
+      return;
+    }
+    
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
+    
+    setPasswordLoading(true);
+    
+    try {
+      await api.user.changePassword(currentPassword, newPassword);
+      toast.success("Password changed successfully");
+      setShowPasswordDialog(false);
+      resetPasswordFields();
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      toast.error(error.message || "Failed to change password");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+  
+  const resetPasswordFields = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const getInitials = (name: string) => {
@@ -177,9 +227,10 @@ const Profile = () => {
                       <h3 className="text-sm font-medium text-muted-foreground mb-2">Security</h3>
                       <Button
                         variant="outline"
-                        onClick={() => toast.info("Password change would go here")}
+                        onClick={() => setShowPasswordDialog(true)}
                         className="text-sm hover-lift"
                       >
+                        <Lock className="w-4 h-4 mr-2" />
                         Change Password
                       </Button>
                     </div>
@@ -190,6 +241,117 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      
+      {/* Password Change Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Update your password to keep your account secure
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handlePasswordChange} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Current Password</Label>
+              <div className="relative">
+                <Input
+                  id="current-password"
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="pr-10"
+                  placeholder="••••••••"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                >
+                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="pr-10"
+                  placeholder="••••••••"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Password must be at least 8 characters long
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirm-password"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pr-10"
+                  placeholder="••••••••"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => {
+                  setShowPasswordDialog(false);
+                  resetPasswordFields();
+                }}
+                disabled={passwordLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={passwordLoading}>
+                {passwordLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Lock className="h-4 w-4 mr-2" />
+                )}
+                {passwordLoading ? "Updating..." : "Update Password"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

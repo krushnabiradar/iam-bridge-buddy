@@ -10,6 +10,9 @@ router.get('/profile', authenticate, userController.getProfile);
 // Update user profile (requires authentication)
 router.put('/profile', authenticate, userController.updateProfile);
 
+// Change password (requires authentication)
+router.post('/change-password', authenticate, userController.changePassword);
+
 // Get all users (admin only)
 router.get('/', authenticate, authorize(['admin']), userController.getAllUsers);
 

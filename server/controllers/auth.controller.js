@@ -1,6 +1,8 @@
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 const crypto = require('crypto');
+const emailService = require('../services/email.service');
 
 // Store OTPs temporarily (in a real app, use Redis or similar)
 const otpStore = new Map();
@@ -339,8 +341,11 @@ exports.forgotPassword = async (req, res) => {
       expiresAt: Date.now() + 15 * 60 * 1000 // 15 minutes in milliseconds
     });
     
-    // In a real app, send the OTP via email
-    console.log(`OTP for ${email}: ${otp}`); // For testing only
+    // Send OTP via email
+    await emailService.sendOtpEmail(email, otp);
+    
+    // For development purposes, we can still log the OTP to console
+    console.log(`OTP for ${email}: ${otp}`);
     
     res.status(200).json({ 
       message: 'OTP has been sent to your email',

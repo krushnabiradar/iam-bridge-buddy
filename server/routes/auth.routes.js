@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const authController = require('../controllers/auth.controller');
+const { authenticate } = require('../middleware/auth.middleware');
 
 // Register new user
 router.post('/register', authController.register);
@@ -38,5 +39,8 @@ router.post('/social', authController.socialLogin);
 
 // SSO login
 router.post('/sso', authController.ssoLogin);
+
+// Verify token
+router.get('/verify-token', authenticate, authController.verifyToken);
 
 module.exports = router;

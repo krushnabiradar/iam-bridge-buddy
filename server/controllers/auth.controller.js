@@ -122,8 +122,20 @@ exports.socialAuthCallback = (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
     
+    // Prepare user data (excluding sensitive fields)
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      role: user.role
+    };
+    
+    // Include token and user data in the URL for the frontend to process
+    const encodedUserData = encodeURIComponent(JSON.stringify(userData));
+    
     // Redirect to the client app with success
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+    res.redirect(`${process.env.CLIENT_URL}?token=${token}&userData=${encodedUserData}`);
   } catch (error) {
     console.error('Social auth callback error:', error);
     res.redirect(`${process.env.CLIENT_URL}/auth?error=${encodeURIComponent(error.message)}`);
@@ -261,4 +273,33 @@ exports.logout = (req, res) => {
     res.clearCookie('token');
     res.status(200).json({ message: 'Logged out successfully' });
   });
+};
+
+// Verify token endpoint (new endpoint)
+exports.verifyToken = (req, res) => {
+  try {
+    const user = req.user;
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    
+    // Return user data
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      role: user.role
+    };
+    
+    res.status(200).json({
+      message: 'Token verified',
+      user: userData,
+      token: req.headers.authorization?.split(' ')[1] || ''
+    });
+  } catch (error) {
+    console.error('Token verification error:', error);
+    res.status(401).json({ message: 'Token verification failed', error: error.message });
+  }
 };

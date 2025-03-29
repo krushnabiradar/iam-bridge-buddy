@@ -23,6 +23,31 @@ export interface AuthResponse {
   token: string;
 }
 
+// Function to extract authentication token from URL
+export function extractAuthFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+  const userData = urlParams.get('userData');
+  
+  if (token) {
+    localStorage.setItem('auth-token', token);
+    
+    if (userData) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userData));
+        localStorage.setItem('iam-user', JSON.stringify(user));
+        return { token, user };
+      } catch (error) {
+        console.error('Failed to parse user data from URL', error);
+      }
+    }
+    
+    return { token };
+  }
+  
+  return null;
+}
+
 export async function apiRequest<T>(
   endpoint: string,
   options: ApiOptions = {}
@@ -93,6 +118,9 @@ export const api = {
         method: 'POST', 
         body: { token } 
       }),
+    // Add a new method to get user profile using the token
+    verifyToken: () => 
+      apiRequest<AuthResponse>('/auth/verify-token', { method: 'GET' }),
   },
   user: {
     getProfile: () => apiRequest('/user/profile'),

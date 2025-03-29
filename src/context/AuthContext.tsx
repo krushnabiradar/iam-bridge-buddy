@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from "sonner";
-import { api, AuthResponse } from '@/lib/api';
+import { api, AuthResponse, extractAuthFromUrl } from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -27,24 +27,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check for existing session
     const checkAuth = async () => {
       try {
+        // First check if there's a token in the URL (from social login redirect)
+        const urlAuth = extractAuthFromUrl();
+        if (urlAuth?.user) {
+          setUser(urlAuth.user);
+          toast.success("Social login successful");
+          
+          // Clear the URL parameters without triggering a refresh
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Navigate to dashboard
+          navigate('/dashboard');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Otherwise check localStorage
         const storedUser = localStorage.getItem('iam-user');
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
       } catch (error) {
         console.error('Authentication check failed:', error);
+        localStorage.removeItem('iam-user');
+        localStorage.removeItem('auth-token');
       } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, []);
+  }, [navigate]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);

@@ -9,6 +9,7 @@ import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
+import HRMS from './pages/HRMS';
 import NotFound from './pages/NotFound';
 
 import './App.css';
@@ -28,6 +29,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/hrms/*" element={<HRMS />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

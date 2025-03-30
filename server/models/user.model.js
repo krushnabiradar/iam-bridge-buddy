@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin', 'hr', 'manager', 'employee'],
     default: 'user'
   },
+  departmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department'
+  },
   avatar: {
     type: String
   },

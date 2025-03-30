@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -16,54 +15,46 @@ const HRMS = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Parse tab from URL query parameters
   const queryParams = new URLSearchParams(location.search);
   const tabFromUrl = queryParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
 
-  // Update URL when tab changes
   useEffect(() => {
     const newParams = new URLSearchParams(location.search);
     newParams.set('tab', activeTab);
     navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
   }, [activeTab, navigate, location.pathname]);
 
-  // Redirect if not authenticated or lacks permission
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
       return;
     }
     
-    // Restrict access based on role
     if (user && !['admin', 'hr', 'manager', 'employee'].includes(user.role || '')) {
       toast.error("You don't have permission to access this page");
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate, user]);
 
-  // Employees query - only for admin, HR, and managers
   const employeesQuery = useQuery({
     queryKey: ['employees'],
     queryFn: () => api.hrms.getEmployees(),
     enabled: isAuthenticated && (user?.role === 'admin' || user?.role === 'hr' || user?.role === 'manager'),
   });
 
-  // Departments query
   const departmentsQuery = useQuery({
     queryKey: ['departments'],
     queryFn: () => api.hrms.getDepartments(),
     enabled: isAuthenticated,
   });
 
-  // Positions query
   const positionsQuery = useQuery({
     queryKey: ['positions'],
     queryFn: () => api.hrms.getPositions(),
     enabled: isAuthenticated,
   });
 
-  // Handle errors
   useEffect(() => {
     if (employeesQuery.error) {
       toast.error('Failed to load employees data');
@@ -80,10 +71,8 @@ const HRMS = () => {
     return null;
   }
   
-  // Check if user has permission to add new items
   const canAddItems = user?.role === 'admin' || user?.role === 'hr';
   
-  // Check if user can view all employees (admin, HR) or only their team (manager)
   const canViewAllEmployees = user?.role === 'admin' || user?.role === 'hr';
 
   return (
@@ -221,11 +210,11 @@ const HRMS = () => {
                       </thead>
                       <tbody>
                         {employeesQuery.data.employees
-                          // Filter employees for managers - only show their team
                           .filter(employee => {
                             if (canViewAllEmployees) return true;
-                            // If manager, only show employees in their department
-                            return user?.role === 'manager' && employee.department?._id === user.departmentId;
+                            return user?.role === 'manager' && 
+                                   user?.departmentId && 
+                                   employee.department?._id === user.departmentId;
                           })
                           .map((employee: any) => (
                             <tr key={employee._id} className="border-b">

@@ -6,15 +6,14 @@ import NavBar from '@/components/NavBar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { 
-  Shield, 
-  Key, 
-  UserPlus, 
-  Lock, 
-  Activity, 
-  BarChart3,
-  User
-} from 'lucide-react';
+import { User } from 'lucide-react';
+
+// Import role-specific dashboards
+import AdminDashboard from '@/components/dashboards/AdminDashboard';
+import HRDashboard from '@/components/dashboards/HRDashboard';
+import ManagerDashboard from '@/components/dashboards/ManagerDashboard';
+import EmployeeDashboard from '@/components/dashboards/EmployeeDashboard';
+import UserDashboard from '@/components/dashboards/UserDashboard';
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -49,38 +48,23 @@ const Dashboard = () => {
     return 'Recently';
   };
 
-  const featureCards = [
-    {
-      title: 'User Management',
-      description: 'Add, remove, and manage user accounts',
-      icon: <UserPlus className="h-6 w-6 text-blue-500" />,
-    },
-    {
-      title: 'Role-based Access',
-      description: 'Control permissions with flexible roles',
-      icon: <Shield className="h-6 w-6 text-indigo-500" />,
-    },
-    {
-      title: 'API Keys',
-      description: 'Generate and manage secure API keys',
-      icon: <Key className="h-6 w-6 text-violet-500" />,
-    },
-    {
-      title: 'Security Logs',
-      description: 'Monitor authentication activity',
-      icon: <Lock className="h-6 w-6 text-red-500" />,
-    },
-    {
-      title: 'Usage Analytics',
-      description: 'Track user activity and engagement',
-      icon: <Activity className="h-6 w-6 text-green-500" />,
-    },
-    {
-      title: 'Reports',
-      description: 'Generate detailed reports on access patterns',
-      icon: <BarChart3 className="h-6 w-6 text-orange-500" />,
-    },
-  ];
+  // Function to render the appropriate dashboard based on user role
+  const renderRoleDashboard = () => {
+    if (!user) return <UserDashboard />;
+    
+    switch (user.role) {
+      case 'admin':
+        return <AdminDashboard />;
+      case 'hr':
+        return <HRDashboard />;
+      case 'manager':
+        return <ManagerDashboard />;
+      case 'employee':
+        return <EmployeeDashboard />;
+      default:
+        return <UserDashboard />;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
@@ -92,7 +76,11 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="text-2xl">Welcome, {user?.name?.split(' ')[0]}</CardTitle>
                 <CardDescription>
-                  Manage your identity and access control settings
+                  {user?.role === 'admin' ? 'Administrator Dashboard' : 
+                   user?.role === 'hr' ? 'Human Resources Dashboard' :
+                   user?.role === 'manager' ? 'Manager Dashboard' :
+                   user?.role === 'employee' ? 'Employee Self-Service' :
+                   'User Dashboard'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -102,8 +90,8 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground">{formatLastLogin()}</p>
                   </div>
                   <div className="bg-primary/5 rounded-lg p-4">
-                    <h3 className="font-medium">Account Status</h3>
-                    <p className="text-sm text-muted-foreground">Active</p>
+                    <h3 className="font-medium">Account Type</h3>
+                    <p className="text-sm text-muted-foreground capitalize">{user?.role || 'User'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -133,26 +121,8 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <h2 className="text-2xl font-bold mb-6">IAM Features</h2>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featureCards.map((card, index) => (
-            <Card 
-              key={index} 
-              className="glass-card overflow-hidden hover-lift"
-            >
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-medium">{card.title}</CardTitle>
-                  {card.icon}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{card.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {/* Role-specific dashboard */}
+        {renderRoleDashboard()}
       </div>
     </div>
   );

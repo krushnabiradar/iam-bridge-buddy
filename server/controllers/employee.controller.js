@@ -1,4 +1,3 @@
-
 const Employee = require('../models/employee.model');
 const User = require('../models/user.model');
 
@@ -149,6 +148,38 @@ exports.updateEmployee = async (req, res) => {
   }
 };
 
+// Update employee by manager
+exports.updateEmployeeByManager = async (req, res) => {
+  try {
+    const { 
+      contactInformation,
+      emergencyContact,
+      status
+    } = req.body;
+    
+    // Check if employee exists
+    const employee = await Employee.findById(req.params.id);
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    
+    // Managers can only update limited fields
+    if (contactInformation !== undefined) employee.contactInformation = contactInformation;
+    if (emergencyContact !== undefined) employee.emergencyContact = emergencyContact;
+    if (status !== undefined) employee.status = status;
+    
+    await employee.save();
+    
+    res.status(200).json({
+      message: 'Employee updated successfully by manager',
+      employee
+    });
+  } catch (error) {
+    console.error('Update employee by manager error:', error);
+    res.status(500).json({ message: 'Failed to update employee', error: error.message });
+  }
+};
+
 // Upload employee document
 exports.uploadDocument = async (req, res) => {
   try {
@@ -195,5 +226,57 @@ exports.deleteEmployee = async (req, res) => {
   } catch (error) {
     console.error('Delete employee error:', error);
     res.status(500).json({ message: 'Failed to delete employee', error: error.message });
+  }
+};
+
+// Get self employee profile
+exports.getSelfEmployeeProfile = async (req, res) => {
+  try {
+    const employee = await Employee.findOne({ userId: req.user._id })
+      .populate('userId', 'name email avatar')
+      .populate('department', 'name')
+      .populate('position', 'title')
+      .populate('manager', 'employeeId');
+    
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee profile not found' });
+    }
+    
+    res.status(200).json({
+      message: 'Employee profile retrieved successfully',
+      employee
+    });
+  } catch (error) {
+    console.error('Get self employee profile error:', error);
+    res.status(500).json({ message: 'Failed to retrieve employee profile', error: error.message });
+  }
+};
+
+// Update self employee profile
+exports.updateSelfEmployeeProfile = async (req, res) => {
+  try {
+    const { 
+      contactInformation,
+      emergencyContact
+    } = req.body;
+    
+    const employee = await Employee.findOne({ userId: req.user._id });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee profile not found' });
+    }
+    
+    // Self-service can only update limited fields
+    if (contactInformation !== undefined) employee.contactInformation = contactInformation;
+    if (emergencyContact !== undefined) employee.emergencyContact = emergencyContact;
+    
+    await employee.save();
+    
+    res.status(200).json({
+      message: 'Employee profile updated successfully',
+      employee
+    });
+  } catch (error) {
+    console.error('Update self employee profile error:', error);
+    res.status(500).json({ message: 'Failed to update employee profile', error: error.message });
   }
 };

@@ -16,6 +16,14 @@ const departmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Employee'
   },
+  budget: {
+    type: Number,
+    default: 0
+  },
+  headcount: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -26,6 +34,13 @@ const departmentSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
+});
+
+// Virtual for getting employees in this department
+departmentSchema.virtual('employees', {
+  ref: 'Employee',
+  localField: '_id',
+  foreignField: 'department'
 });
 
 const Department = mongoose.model('Department', departmentSchema);

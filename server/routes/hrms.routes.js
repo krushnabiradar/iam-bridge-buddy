@@ -4,7 +4,7 @@ const router = express.Router();
 const departmentController = require('../controllers/department.controller');
 const employeeController = require('../controllers/employee.controller');
 const positionController = require('../controllers/position.controller');
-const { authenticate, authorize } = require('../middleware/auth.middleware');
+const { authenticate, authorize, isEmployeeManager } = require('../middleware/auth.middleware');
 
 // Apply authentication middleware to all routes
 router.use(authenticate);
@@ -28,7 +28,12 @@ router.get('/employees', authorize(['admin', 'hr', 'manager']), employeeControll
 router.get('/employees/:id', employeeController.getEmployeeById);
 router.post('/employees', authorize(['admin', 'hr']), employeeController.createEmployee);
 router.put('/employees/:id', authorize(['admin', 'hr']), employeeController.updateEmployee);
-router.post('/employees/:id/documents', authorize(['admin', 'hr']), employeeController.uploadDocument);
+router.put('/employees/:id/manager', authorize(['manager']), isEmployeeManager, employeeController.updateEmployeeByManager);
+router.post('/employees/:id/documents', authorize(['admin', 'hr', 'manager', 'employee']), employeeController.uploadDocument);
 router.delete('/employees/:id', authorize(['admin']), employeeController.deleteEmployee);
+
+// Employee self-service routes
+router.get('/self', authorize(['employee', 'manager', 'hr', 'admin']), employeeController.getSelfEmployeeProfile);
+router.put('/self', authorize(['employee', 'manager', 'hr', 'admin']), employeeController.updateSelfEmployeeProfile);
 
 module.exports = router;

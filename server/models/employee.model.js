@@ -75,6 +75,151 @@ const employeeSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  attendance: [{
+    date: {
+      type: Date,
+      required: true
+    },
+    clockIn: Date,
+    clockOut: Date,
+    location: {
+      latitude: Number,
+      longitude: Number
+    },
+    status: {
+      type: String,
+      enum: ['present', 'absent', 'halfDay', 'workFromHome'],
+      default: 'present'
+    },
+    notes: String,
+    edited: {
+      type: Boolean,
+      default: false
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Employee'
+    }
+  }],
+  leaves: [{
+    type: {
+      type: String,
+      enum: ['sick', 'casual', 'annual', 'unpaid', 'other'],
+      required: true
+    },
+    startDate: {
+      type: Date,
+      required: true
+    },
+    endDate: {
+      type: Date,
+      required: true
+    },
+    reason: String,
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected', 'cancelled'],
+      default: 'pending'
+    },
+    approvalChain: [{
+      approver: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Employee'
+      },
+      status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+      },
+      date: Date,
+      comments: String
+    }]
+  }],
+  leaveBalance: {
+    sick: {
+      type: Number,
+      default: 10
+    },
+    casual: {
+      type: Number,
+      default: 10
+    },
+    annual: {
+      type: Number,
+      default: 15
+    }
+  },
+  performance: [{
+    year: Number,
+    quarter: Number,
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Employee'
+    },
+    ratings: {
+      technical: {
+        type: Number,
+        min: 1,
+        max: 5
+      },
+      communication: {
+        type: Number,
+        min: 1,
+        max: 5
+      },
+      teamwork: {
+        type: Number,
+        min: 1,
+        max: 5
+      },
+      leadership: {
+        type: Number,
+        min: 1,
+        max: 5
+      },
+      overall: {
+        type: Number,
+        min: 1,
+        max: 5
+      }
+    },
+    feedback: String,
+    goals: [{
+      description: String,
+      targetDate: Date,
+      status: {
+        type: String,
+        enum: ['pending', 'inProgress', 'completed', 'deferred'],
+        default: 'pending'
+      }
+    }],
+    status: {
+      type: String,
+      enum: ['draft', 'submitted', 'acknowledged', 'final'],
+      default: 'draft'
+    }
+  }],
+  salary: {
+    basic: Number,
+    hra: Number,
+    allowances: Number,
+    deductions: Number,
+    tax: Number,
+    netSalary: Number,
+    bankAccount: String,
+    paymentHistory: [{
+      month: Number,
+      year: Number,
+      amount: Number,
+      paymentDate: Date,
+      status: {
+        type: String,
+        enum: ['pending', 'processed', 'paid'],
+        default: 'pending'
+      },
+      slipUrl: String
+    }]
+  },
   createdAt: {
     type: Date,
     default: Date.now

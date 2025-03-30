@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { api, AuthResponse, extractAuthFromUrl } from '@/lib/api';
@@ -11,7 +10,7 @@ interface User {
   email: string;
   avatar?: string;
   role?: string;
-  lastLogin?: string; // Add lastLogin to the User interface
+  lastLogin?: string;
 }
 
 interface AuthContextType {
@@ -23,6 +22,7 @@ interface AuthContextType {
   logout: () => void;
   socialLogin: (provider: string) => Promise<void>;
   ssoLogin: (token: string) => Promise<void>;
+  updateUserData: (userData: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,25 +33,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for existing session
     const checkAuth = async () => {
       try {
-        // First check if there's a token in the URL (from social login redirect)
         const urlAuth = extractAuthFromUrl();
         if (urlAuth?.user) {
           setUser(urlAuth.user);
           toast.success("Social login successful");
-          
-          // Clear the URL parameters without triggering a refresh
           window.history.replaceState({}, document.title, window.location.pathname);
-          
-          // Navigate to dashboard
           navigate('/dashboard');
           setIsLoading(false);
           return;
         }
-        
-        // Otherwise check localStorage
         const storedUser = localStorage.getItem('iam-user');
         if (storedUser) {
           setUser(JSON.parse(storedUser));
@@ -71,11 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // In a real implementation, this would be an API call
-      // The mock implementation will be used for now
       const response = await api.auth.login(email, password);
-      
-      // Use typed response
       setUser(response.user);
       localStorage.setItem('iam-user', JSON.stringify(response.user));
       localStorage.setItem('auth-token', response.token);
@@ -92,11 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      // In a real implementation, this would be an API call
-      // The mock implementation will be used for now
       const response = await api.auth.register(name, email, password);
-      
-      // Use typed response
       setUser(response.user);
       localStorage.setItem('iam-user', JSON.stringify(response.user));
       localStorage.setItem('auth-token', response.token);
@@ -113,8 +97,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const socialLogin = async (provider: string) => {
     setIsLoading(true);
     try {
-      // In a real implementation, this would be an API call
-      // For now, simulate a frontend-only flow
       const mockUserData = {
         id: '1',
         name: `${provider} User`,
@@ -123,7 +105,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const response = await api.auth.socialLogin(provider, mockUserData);
       
-      // Use typed response
       setUser(response.user);
       localStorage.setItem('iam-user', JSON.stringify(response.user));
       localStorage.setItem('auth-token', response.token);
@@ -140,11 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const ssoLogin = async (token: string) => {
     setIsLoading(true);
     try {
-      // In a real implementation, this would be an API call
-      // The mock implementation will be used for now
       const response = await api.auth.ssoLogin(token);
       
-      // Use typed response
       setUser(response.user);
       localStorage.setItem('iam-user', JSON.stringify(response.user));
       localStorage.setItem('auth-token', response.token);
@@ -165,6 +143,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success("Logged out successfully");
   };
 
+  const updateUserData = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('iam-user', JSON.stringify(userData));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -175,7 +158,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         socialLogin,
-        ssoLogin
+        ssoLogin,
+        updateUserData
       }}
     >
       {children}

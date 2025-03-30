@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -44,7 +43,8 @@ const Profile = () => {
     
     try {
       const response = await api.user.updateProfile({ name, email });
-      updateUserData(response.user);
+      const responseData = response as { user: typeof user };
+      updateUserData(responseData.user);
       toast.success("Profile updated successfully");
       setIsEditing(false);
     } catch (error) {

@@ -3,12 +3,10 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import HRMSModules from '@/components/hrms/HRMSModules';
+import ERPModules from '@/components/erp/ERPModules';
 import NavBar from '@/components/NavBar';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 
-const HRMS = () => {
+const ERP = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -20,7 +18,7 @@ const HRMS = () => {
     }
     
     // Restrict access based on role
-    if (user && !['admin', 'hr', 'manager', 'employee'].includes(user.role || '')) {
+    if (user && !['admin', 'manager', 'employee'].includes(user.role || '')) {
       toast.error("You don't have permission to access this page");
       navigate('/dashboard');
     }
@@ -34,17 +32,11 @@ const HRMS = () => {
     <div className="min-h-screen bg-background">
       <NavBar />
       <main className="container mx-auto pt-20 py-4">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={() => navigate('/erp')} className="mr-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to ERP
-          </Button>
-          <h1 className="text-3xl font-bold">HR Management System</h1>
-        </div>
-        <HRMSModules />
+        <h1 className="text-3xl font-bold mb-6">Enterprise Resource Planning</h1>
+        <ERPModules />
       </main>
     </div>
   );
 };
 
-export default HRMS;
+export default ERP;

@@ -3,12 +3,18 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Users, Building2, Briefcase, FileText, Calendar, Award } from 'lucide-react';
+import { Users, Building2, Briefcase, FileText, Calendar, Award, LayoutGrid } from 'lucide-react';
 
 const HRDashboard = () => {
   const navigate = useNavigate();
   
   const featureCards = [
+    {
+      title: 'ERP System',
+      description: 'Access the complete Enterprise Resource Planning system',
+      icon: <LayoutGrid className="h-6 w-6 text-indigo-500" />,
+      action: () => navigate('/erp')
+    },
     {
       title: 'Employee Management',
       description: 'Manage employee records and information',

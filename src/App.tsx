@@ -10,6 +10,9 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import HRMS from './pages/HRMS';
+import ERP from './pages/ERP';
+import SalesModule from './pages/erp/SalesModule';
+import InventoryModule from './pages/erp/InventoryModule';
 import NotFound from './pages/NotFound';
 
 import './App.css';
@@ -30,6 +33,9 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/hrms/*" element={<HRMS />} />
+              <Route path="/erp" element={<ERP />} />
+              <Route path="/erp/sales" element={<SalesModule />} />
+              <Route path="/erp/inventory" element={<InventoryModule />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

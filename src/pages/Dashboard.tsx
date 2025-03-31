@@ -6,14 +6,7 @@ import NavBar from '@/components/NavBar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { User } from 'lucide-react';
-
-// Import role-specific dashboards
-import AdminDashboard from '@/components/dashboards/AdminDashboard';
-import HRDashboard from '@/components/dashboards/HRDashboard';
-import ManagerDashboard from '@/components/dashboards/ManagerDashboard';
-import EmployeeDashboard from '@/components/dashboards/EmployeeDashboard';
-import UserDashboard from '@/components/dashboards/UserDashboard';
+import { User, Shield, KeyRound, Activity, Bell } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -48,24 +41,6 @@ const Dashboard = () => {
     return 'Recently';
   };
 
-  // Function to render the appropriate dashboard based on user role
-  const renderRoleDashboard = () => {
-    if (!user) return <UserDashboard />;
-    
-    switch (user.role) {
-      case 'admin':
-        return <AdminDashboard />;
-      case 'hr':
-        return <HRDashboard />;
-      case 'manager':
-        return <ManagerDashboard />;
-      case 'employee':
-        return <EmployeeDashboard />;
-      default:
-        return <UserDashboard />;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <NavBar />
@@ -76,11 +51,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="text-2xl">Welcome, {user?.name?.split(' ')[0]}</CardTitle>
                 <CardDescription>
-                  {user?.role === 'admin' ? 'Administrator Dashboard' : 
-                   user?.role === 'hr' ? 'Human Resources Dashboard' :
-                   user?.role === 'manager' ? 'Manager Dashboard' :
-                   user?.role === 'employee' ? 'Employee Self-Service' :
-                   'User Dashboard'}
+                  Identity and Access Management Dashboard
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -121,8 +92,77 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Role-specific dashboard */}
-        {renderRoleDashboard()}
+        {/* IAM Features */}
+        <h2 className="text-2xl font-bold mb-6">Identity & Access Management</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="glass-card hover-lift">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <User className="h-5 w-5 text-primary mr-2" />
+                Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Manage your personal information and account details
+              </p>
+              <Button className="w-full" variant="outline" onClick={() => navigate('/profile')}>
+                Manage Profile
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card hover-lift">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <Shield className="h-5 w-5 text-green-500 mr-2" />
+                Security
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Review and update your security settings
+              </p>
+              <Button className="w-full" variant="outline" onClick={() => navigate('/profile')}>
+                Security Settings
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card hover-lift">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <KeyRound className="h-5 w-5 text-amber-500 mr-2" />
+                API Access
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Generate and manage API keys and tokens
+              </p>
+              <Button className="w-full" variant="outline" disabled>
+                Coming Soon
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card hover-lift">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 text-blue-500 mr-2" />
+                Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Review login history and account activity
+              </p>
+              <Button className="w-full" variant="outline" disabled>
+                Coming Soon
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

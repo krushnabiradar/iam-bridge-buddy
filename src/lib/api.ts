@@ -1,3 +1,4 @@
+
 // API utility for interacting with the backend
 
 export const API_BASE_URL = 'http://localhost:5000/api';
@@ -21,62 +22,6 @@ export interface AuthResponse {
     lastLogin?: string;
   };
   token: string;
-}
-
-export interface EmployeeResponse {
-  message: string;
-  employee: {
-    _id: string;
-    userId: {
-      name: string;
-      email: string;
-      avatar?: string;
-    };
-    employeeId: string;
-    department?: {
-      _id: string;
-      name: string;
-    };
-    position?: {
-      _id: string;
-      title: string;
-    };
-    dateOfJoining: string;
-    status: 'active' | 'onLeave' | 'terminated' | 'retired';
-  };
-}
-
-export interface DepartmentResponse {
-  message: string;
-  department: {
-    _id: string;
-    name: string;
-    description?: string;
-    manager?: {
-      _id: string;
-      employeeId: string;
-    };
-  };
-}
-
-export interface PositionResponse {
-  message: string;
-  position: {
-    _id: string;
-    title: string;
-    department: {
-      _id: string;
-      name: string;
-    };
-    description?: string;
-    responsibilities?: string[];
-    requirements?: string[];
-    salaryRange?: {
-      min?: number;
-      max?: number;
-    };
-    isActive: boolean;
-  };
 }
 
 // Function to extract authentication token from URL
@@ -203,69 +148,6 @@ export const api = {
       apiRequest<{ message: string }>('/user/change-password', {
         method: 'POST',
         body: { currentPassword, newPassword }
-      }),
-  },
-  hrms: {
-    getDepartments: () => 
-      apiRequest<{ message: string, departments: any[] }>('/hrms/departments'),
-    getDepartment: (id: string) => 
-      apiRequest<DepartmentResponse>(`/hrms/departments/${id}`),
-    createDepartment: (data: {name: string, description?: string, manager?: string}) => 
-      apiRequest<DepartmentResponse>('/hrms/departments', {
-        method: 'POST',
-        body: data
-      }),
-    updateDepartment: (id: string, data: {name?: string, description?: string, manager?: string}) => 
-      apiRequest<DepartmentResponse>(`/hrms/departments/${id}`, {
-        method: 'PUT',
-        body: data
-      }),
-    deleteDepartment: (id: string) => 
-      apiRequest<{message: string}>(`/hrms/departments/${id}`, {
-        method: 'DELETE'
-      }),
-      
-    getPositions: () => 
-      apiRequest<{ message: string, positions: any[] }>('/hrms/positions'),
-    getPosition: (id: string) => 
-      apiRequest<PositionResponse>(`/hrms/positions/${id}`),
-    createPosition: (data: any) => 
-      apiRequest<PositionResponse>('/hrms/positions', {
-        method: 'POST',
-        body: data
-      }),
-    updatePosition: (id: string, data: any) => 
-      apiRequest<PositionResponse>(`/hrms/positions/${id}`, {
-        method: 'PUT',
-        body: data
-      }),
-    deletePosition: (id: string) => 
-      apiRequest<{message: string}>(`/hrms/positions/${id}`, {
-        method: 'DELETE'
-      }),
-      
-    getEmployees: () => 
-      apiRequest<{ message: string, employees: any[] }>('/hrms/employees'),
-    getEmployee: (id: string) => 
-      apiRequest<EmployeeResponse>(`/hrms/employees/${id}`),
-    createEmployee: (data: any) => 
-      apiRequest<EmployeeResponse>('/hrms/employees', {
-        method: 'POST',
-        body: data
-      }),
-    updateEmployee: (id: string, data: any) => 
-      apiRequest<EmployeeResponse>(`/hrms/employees/${id}`, {
-        method: 'PUT',
-        body: data
-      }),
-    uploadDocument: (id: string, data: {title: string, fileUrl: string}) => 
-      apiRequest<EmployeeResponse>(`/hrms/employees/${id}/documents`, {
-        method: 'POST',
-        body: data
-      }),
-    deleteEmployee: (id: string) => 
-      apiRequest<{message: string}>(`/hrms/employees/${id}`, {
-        method: 'DELETE'
       }),
   }
 };

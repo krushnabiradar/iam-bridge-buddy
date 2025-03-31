@@ -8,7 +8,6 @@ const session = require('express-session');
 const passport = require('./config/passport');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
-const hrmsRoutes = require('./routes/hrms.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,7 +39,6 @@ app.use(passport.session());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/hrms', hrmsRoutes);
 
 // Default route
 app.get('/', (req, res) => {

@@ -1,7 +1,8 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { api, AuthResponse, extractAuthFromUrl } from '@/lib/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, NavigateFunction } from 'react-router-dom';
 import { format } from 'date-fns';
 
 interface User {
@@ -27,10 +28,21 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Create a NavigationAwareAuthProvider to handle the issue with navigate not being available
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <NavigationAwareAuthProvider>
+      {children}
+    </NavigationAwareAuthProvider>
+  );
+};
+
+// Create an inner provider that uses the navigation hooks
+const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const checkAuth = async () => {

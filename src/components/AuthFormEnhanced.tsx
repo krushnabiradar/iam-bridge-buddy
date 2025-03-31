@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -37,7 +36,6 @@ const AuthFormEnhanced = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear error when field is modified
     if (formErrors[name as keyof typeof formErrors]) {
       setFormErrors(prev => ({
         ...prev,
@@ -262,7 +260,7 @@ const AuthFormEnhanced = () => {
             </div>
           </div>
           
-          <SocialLoginButtons />
+          <SocialLoginButtons isLoading={isLoading} />
         </Tabs>
       </CardContent>
     </Card>

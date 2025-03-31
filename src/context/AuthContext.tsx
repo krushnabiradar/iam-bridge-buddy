@@ -1,9 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from "sonner";
 import { api, AuthResponse, extractAuthFromUrl } from '@/lib/api';
-import { useNavigate, useLocation, NavigateFunction } from 'react-router-dom';
-import { format } from 'date-fns';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
 interface User {
@@ -29,16 +27,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Create a NavigationAwareAuthProvider to handle the issue with navigate not being available
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <NavigationAwareAuthProvider>
-      {children}
-    </NavigationAwareAuthProvider>
-  );
-};
-
-// Create an inner provider that uses the navigation hooks
+// Create a component that will use the navigation hooks
 const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -278,6 +267,15 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         </div>
       ) : children}
     </AuthContext.Provider>
+  );
+};
+
+// Create an outer provider that wraps the inner provider
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <NavigationAwareAuthProvider>
+      {children}
+    </NavigationAwareAuthProvider>
   );
 };
 

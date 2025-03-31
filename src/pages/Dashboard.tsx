@@ -5,9 +5,16 @@ import { useAuth } from '@/context/AuthContext';
 import NavBar from '@/components/NavBar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { User, Shield, KeyRound, Activity, Bell } from 'lucide-react';
+import { 
+  Shield, 
+  Key, 
+  UserPlus, 
+  Lock, 
+  Activity, 
+  BarChart3,
+  User
+} from 'lucide-react';
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -42,6 +49,39 @@ const Dashboard = () => {
     return 'Recently';
   };
 
+  const featureCards = [
+    {
+      title: 'User Management',
+      description: 'Add, remove, and manage user accounts',
+      icon: <UserPlus className="h-6 w-6 text-blue-500" />,
+    },
+    {
+      title: 'Role-based Access',
+      description: 'Control permissions with flexible roles',
+      icon: <Shield className="h-6 w-6 text-indigo-500" />,
+    },
+    {
+      title: 'API Keys',
+      description: 'Generate and manage secure API keys',
+      icon: <Key className="h-6 w-6 text-violet-500" />,
+    },
+    {
+      title: 'Security Logs',
+      description: 'Monitor authentication activity',
+      icon: <Lock className="h-6 w-6 text-red-500" />,
+    },
+    {
+      title: 'Usage Analytics',
+      description: 'Track user activity and engagement',
+      icon: <Activity className="h-6 w-6 text-green-500" />,
+    },
+    {
+      title: 'Reports',
+      description: 'Generate detailed reports on access patterns',
+      icon: <BarChart3 className="h-6 w-6 text-orange-500" />,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <NavBar />
@@ -52,7 +92,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="text-2xl">Welcome, {user?.name?.split(' ')[0]}</CardTitle>
                 <CardDescription>
-                  Identity and Access Management Dashboard
+                  Manage your identity and access control settings
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -62,8 +102,8 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground">{formatLastLogin()}</p>
                   </div>
                   <div className="bg-primary/5 rounded-lg p-4">
-                    <h3 className="font-medium">Account Type</h3>
-                    <p className="text-sm text-muted-foreground capitalize">{user?.role || 'User'}</p>
+                    <h3 className="font-medium">Account Status</h3>
+                    <p className="text-sm text-muted-foreground">Active</p>
                   </div>
                 </div>
               </CardContent>
@@ -93,76 +133,25 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* IAM Features */}
-        <h2 className="text-2xl font-bold mb-6">Identity & Access Management</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="glass-card hover-lift">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center">
-                <User className="h-5 w-5 text-primary mr-2" />
-                Profile
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Manage your personal information and account details
-              </p>
-              <Button className="w-full" variant="outline" onClick={() => navigate('/profile')}>
-                Manage Profile
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card hover-lift">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5 text-green-500 mr-2" />
-                Security
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Review and update your security settings
-              </p>
-              <Button className="w-full" variant="outline" onClick={() => navigate('/profile')}>
-                Security Settings
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card hover-lift">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center">
-                <KeyRound className="h-5 w-5 text-amber-500 mr-2" />
-                API Access
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Generate and manage API keys and tokens
-              </p>
-              <Button className="w-full" variant="outline" disabled>
-                Coming Soon
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card hover-lift">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center">
-                <Activity className="h-5 w-5 text-blue-500 mr-2" />
-                Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Review login history and account activity
-              </p>
-              <Button className="w-full" variant="outline" disabled>
-                Coming Soon
-              </Button>
-            </CardContent>
-          </Card>
+        <h2 className="text-2xl font-bold mb-6">IAM Features</h2>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {featureCards.map((card, index) => (
+            <Card 
+              key={index} 
+              className="glass-card overflow-hidden hover-lift"
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-medium">{card.title}</CardTitle>
+                  {card.icon}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{card.description}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </div>

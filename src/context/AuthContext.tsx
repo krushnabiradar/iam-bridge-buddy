@@ -10,7 +10,6 @@ interface User {
   email: string;
   avatar?: string;
   role?: string;
-  departmentId?: string;
   lastLogin?: string;
 }
 

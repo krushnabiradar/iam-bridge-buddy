@@ -19,7 +19,7 @@ export interface AuthResponse {
     email: string;
     avatar?: string;
     role?: string;
-    lastLogin?: string;
+    lastLogin?: string; // Add lastLogin to the AuthResponse
   };
   token: string;
 }
@@ -119,8 +119,10 @@ export const api = {
         method: 'POST', 
         body: { token } 
       }),
+    // Add a new method to get user profile using the token
     verifyToken: () => 
       apiRequest<AuthResponse>('/auth/verify-token', { method: 'GET' }),
+    // Add password reset endpoints
     requestPasswordReset: (email: string) => 
       apiRequest<{ message: string }>('/auth/forgot-password', { 
         method: 'POST', 
@@ -150,32 +152,4 @@ export const api = {
         body: { currentPassword, newPassword }
       }),
   },
-  // Add IAM functionality
-  iam: {
-    // Document management
-    uploadDocument: (userId: string, data: { title: string, fileUrl: string }) =>
-      apiRequest('/iam/documents', {
-        method: 'POST',
-        body: { userId, ...data }
-      }),
-    
-    // Department, position and employee management (repurposed from HRMS)
-    getDepartments: () => apiRequest('/iam/departments'),
-    getPositions: () => apiRequest('/iam/positions'),
-    getEmployees: () => apiRequest('/iam/employees'),
-    createEmployee: (data: any) => 
-      apiRequest('/iam/employees', { 
-        method: 'POST', 
-        body: data 
-      }),
-    updateEmployee: (id: string, data: any) => 
-      apiRequest(`/iam/employees/${id}`, { 
-        method: 'PUT', 
-        body: data 
-      }),
-    deleteEmployee: (id: string) => 
-      apiRequest(`/iam/employees/${id}`, { 
-        method: 'DELETE' 
-      }),
-  }
 };

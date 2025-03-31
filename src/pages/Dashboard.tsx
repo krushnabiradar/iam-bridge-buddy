@@ -2,9 +2,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useAuthorization } from '@/context/AuthorizationContext';
 import NavBar from '@/components/NavBar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { 
   Shield, 
@@ -13,11 +16,16 @@ import {
   Lock, 
   Activity, 
   BarChart3,
-  User
+  User,
+  Users,
+  UserCog,
+  Settings
 } from 'lucide-react';
+import RoleGuard from '@/components/RoleGuard';
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
+  const { userRoles, userPermissions } = useAuthorization();
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -54,31 +62,43 @@ const Dashboard = () => {
       title: 'User Management',
       description: 'Add, remove, and manage user accounts',
       icon: <UserPlus className="h-6 w-6 text-blue-500" />,
+      path: '/admin/users',
+      requiredRole: 'admin'
     },
     {
       title: 'Role-based Access',
       description: 'Control permissions with flexible roles',
       icon: <Shield className="h-6 w-6 text-indigo-500" />,
+      path: '/admin/roles',
+      requiredRole: 'admin'
     },
     {
       title: 'API Keys',
       description: 'Generate and manage secure API keys',
       icon: <Key className="h-6 w-6 text-violet-500" />,
+      path: '/dashboard/api-keys',
+      requiredRole: 'admin'
     },
     {
       title: 'Security Logs',
       description: 'Monitor authentication activity',
       icon: <Lock className="h-6 w-6 text-red-500" />,
+      path: '/dashboard/security-logs',
+      requiredRole: 'admin'
     },
     {
       title: 'Usage Analytics',
       description: 'Track user activity and engagement',
       icon: <Activity className="h-6 w-6 text-green-500" />,
+      path: '/dashboard/analytics',
+      requiredRole: 'admin'
     },
     {
       title: 'Reports',
       description: 'Generate detailed reports on access patterns',
       icon: <BarChart3 className="h-6 w-6 text-orange-500" />,
+      path: '/dashboard/reports',
+      requiredRole: 'admin'
     },
   ];
 
@@ -106,6 +126,21 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground">Active</p>
                   </div>
                 </div>
+                <div className="mt-4">
+                  <h3 className="font-medium mb-2">Your Roles</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {userRoles.length > 0 ? (
+                      userRoles.map((role, index) => (
+                        <Badge key={index} variant="outline" className="px-3 py-1">
+                          <Shield className="h-3.5 w-3.5 mr-1 opacity-70" />
+                          {role}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No roles assigned</p>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -129,6 +164,12 @@ const Dashboard = () => {
                 </div>
                 <p className="text-xs text-muted-foreground">Profile completion: 85%</p>
               </CardContent>
+              <CardFooter>
+                <Button variant="outline" className="w-full" onClick={() => navigate('/profile')}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage Profile
+                </Button>
+              </CardFooter>
             </Card>
           </div>
         </div>
@@ -137,21 +178,79 @@ const Dashboard = () => {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {featureCards.map((card, index) => (
-            <Card 
-              key={index} 
-              className="glass-card overflow-hidden hover-lift"
+            <RoleGuard 
+              key={index}
+              role={card.requiredRole}
+              fallback={null}
             >
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-medium">{card.title}</CardTitle>
-                  {card.icon}
-                </div>
+              <Card 
+                className="glass-card overflow-hidden hover-lift cursor-pointer transition-all"
+                onClick={() => navigate(card.path)}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-medium">{card.title}</CardTitle>
+                    {card.icon}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{card.description}</p>
+                </CardContent>
+              </Card>
+            </RoleGuard>
+          ))}
+        </div>
+
+        <div className="mt-8">
+          <RoleGuard role="admin">
+            <Card className="glass-card mt-8 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Shield className="h-5 w-5 mr-2 text-primary" />
+                  Admin Controls
+                </CardTitle>
+                <CardDescription>
+                  Quick access to administrative functions
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">{card.description}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex flex-col items-center justify-center gap-2"
+                    onClick={() => navigate('/admin/users')}
+                  >
+                    <Users className="h-6 w-6" />
+                    <span className="text-xs">Users</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex flex-col items-center justify-center gap-2"
+                    onClick={() => navigate('/admin/roles')}
+                  >
+                    <Shield className="h-6 w-6" />
+                    <span className="text-xs">Roles</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex flex-col items-center justify-center gap-2"
+                    onClick={() => {}}
+                  >
+                    <Key className="h-6 w-6" />
+                    <span className="text-xs">API Keys</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex flex-col items-center justify-center gap-2"
+                    onClick={() => {}}
+                  >
+                    <UserCog className="h-6 w-6" />
+                    <span className="text-xs">Settings</span>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          ))}
+          </RoleGuard>
         </div>
       </div>
     </div>

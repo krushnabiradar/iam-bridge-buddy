@@ -44,7 +44,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ employeeId, onSuccess }
   const onSubmit = async (data: DocumentFormValues) => {
     setIsUploading(true);
     try {
-      await api.hrms.uploadDocument(employeeId, {
+      await api.iam.uploadDocument(employeeId, {
         title: data.title,
         fileUrl: data.fileUrl
       });

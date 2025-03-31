@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import NavBar from '@/components/NavBar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { User, Shield, KeyRound, Activity, Bell } from 'lucide-react';
 

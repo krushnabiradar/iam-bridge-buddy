@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
@@ -48,7 +47,7 @@ const EmployeeManagement = () => {
   // Get employees data
   const employeesQuery = useQuery({
     queryKey: ['employees'],
-    queryFn: () => api.hrms.getEmployees(),
+    queryFn: () => api.iam.getEmployees(),
     enabled: !!user && ['admin', 'hr', 'manager'].includes(user.role || ''),
   });
 
@@ -64,7 +63,7 @@ const EmployeeManagement = () => {
   const handleDeleteEmployee = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this employee?')) {
       try {
-        await api.hrms.deleteEmployee(id);
+        await api.iam.deleteEmployee(id);
         toast.success('Employee deleted successfully');
         employeesQuery.refetch();
       } catch (error) {

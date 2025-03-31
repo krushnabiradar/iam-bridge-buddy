@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -79,17 +78,17 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onSuccess }) => {
   // Get departments, positions, and employees for dropdowns
   const departmentsQuery = useQuery({
     queryKey: ['departments'],
-    queryFn: () => api.hrms.getDepartments(),
+    queryFn: () => api.iam.getDepartments(),
   });
 
   const positionsQuery = useQuery({
     queryKey: ['positions'],
-    queryFn: () => api.hrms.getPositions(),
+    queryFn: () => api.iam.getPositions(),
   });
 
   const employeesQuery = useQuery({
     queryKey: ['employees'],
-    queryFn: () => api.hrms.getEmployees(),
+    queryFn: () => api.iam.getEmployees(),
   });
 
   // Fetch users only needed for adding new employees
@@ -194,10 +193,10 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onSuccess }) => {
   const onSubmit = async (data: EmployeeFormValues) => {
     try {
       if (isEditMode) {
-        await api.hrms.updateEmployee(employee._id, data);
+        await api.iam.updateEmployee(employee._id, data);
         toast.success('Employee updated successfully');
       } else {
-        await api.hrms.createEmployee(data);
+        await api.iam.createEmployee(data);
         toast.success('Employee created successfully');
       }
       onSuccess();

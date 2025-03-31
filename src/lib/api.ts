@@ -149,5 +149,33 @@ export const api = {
         method: 'POST',
         body: { currentPassword, newPassword }
       }),
+  },
+  // Add IAM functionality
+  iam: {
+    // Document management
+    uploadDocument: (userId: string, data: { title: string, fileUrl: string }) =>
+      apiRequest('/iam/documents', {
+        method: 'POST',
+        body: { userId, ...data }
+      }),
+    
+    // Department, position and employee management (repurposed from HRMS)
+    getDepartments: () => apiRequest('/iam/departments'),
+    getPositions: () => apiRequest('/iam/positions'),
+    getEmployees: () => apiRequest('/iam/employees'),
+    createEmployee: (data: any) => 
+      apiRequest('/iam/employees', { 
+        method: 'POST', 
+        body: data 
+      }),
+    updateEmployee: (id: string, data: any) => 
+      apiRequest(`/iam/employees/${id}`, { 
+        method: 'PUT', 
+        body: data 
+      }),
+    deleteEmployee: (id: string) => 
+      apiRequest(`/iam/employees/${id}`, { 
+        method: 'DELETE' 
+      }),
   }
 };

@@ -1,9 +1,10 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from "sonner";
 import { api, AuthResponse, extractAuthFromUrl } from '@/lib/api';
 import { useNavigate, useLocation, NavigateFunction } from 'react-router-dom';
 import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 
 interface User {
   id: string;
@@ -18,7 +19,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   socialLogin: (provider: string) => Promise<void>;
@@ -44,40 +45,90 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const urlAuth = extractAuthFromUrl();
-        if (urlAuth?.user) {
-          setUser(urlAuth.user);
-          toast.success("Social login successful");
-          window.history.replaceState({}, document.title, window.location.pathname);
+  // Memoize the current route to avoid unnecessary re-renders
+  const currentPath = useMemo(() => location.pathname, [location.pathname]);
+
+  // Enhanced checkAuth function with better error handling and caching
+  const checkAuth = useCallback(async () => {
+    try {
+      // Check for auth in URL first (for social login redirect)
+      const urlAuth = extractAuthFromUrl();
+      if (urlAuth?.user) {
+        setUser(urlAuth.user);
+        // Store in localStorage with timestamp for cache expiry
+        const userWithTimestamp = {
+          user: urlAuth.user,
+          timestamp: new Date().getTime(),
+          remember: true
+        };
+        localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
+        localStorage.setItem('auth-token', urlAuth.token);
+        
+        toast.success("Social login successful");
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        if (location.pathname === '/auth') {
           navigate('/dashboard');
-          setIsLoading(false);
-          return;
         }
-        const storedUser = localStorage.getItem('iam-user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        return;
+      }
+      
+      // Check localStorage for cached user
+      const storedUserData = localStorage.getItem('iam-user');
+      if (storedUserData) {
+        const { user: storedUser, timestamp, remember } = JSON.parse(storedUserData);
+        
+        // Check if cache is valid (24 hours for remember me, 1 hour for regular session)
+        const expiryTime = remember ? 24 * 60 * 60 * 1000 : 60 * 60 * 1000; // 24 hours or 1 hour
+        const isExpired = new Date().getTime() - timestamp > expiryTime;
+        
+        if (!isExpired) {
+          setUser(storedUser);
+        } else {
+          // Clear expired cache
+          localStorage.removeItem('iam-user');
+          localStorage.removeItem('auth-token');
         }
-      } catch (error) {
-        console.error('Authentication check failed:', error);
-        localStorage.removeItem('iam-user');
-        localStorage.removeItem('auth-token');
-      } finally {
-        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Authentication check failed:', error);
+      localStorage.removeItem('iam-user');
+      localStorage.removeItem('auth-token');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [navigate, location.pathname]);
+
+  useEffect(() => {
+    checkAuth();
+    
+    // Add event listener for storage changes (for multi-tab support)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'iam-user' || e.key === 'auth-token') {
+        checkAuth();
       }
     };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [checkAuth]);
 
-    checkAuth();
-  }, [navigate]);
-
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, remember: boolean = false) => {
     setIsLoading(true);
     try {
       const response = await api.auth.login(email, password);
       setUser(response.user);
-      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      
+      // Store user with timestamp and remember flag
+      const userWithTimestamp = {
+        user: response.user,
+        timestamp: new Date().getTime(),
+        remember
+      };
+      
+      localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
       localStorage.setItem('auth-token', response.token);
       toast.success("Logged in successfully");
     } catch (error) {
@@ -94,7 +145,15 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const response = await api.auth.register(name, email, password);
       setUser(response.user);
-      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      
+      // Store user with timestamp and remember flag
+      const userWithTimestamp = {
+        user: response.user,
+        timestamp: new Date().getTime(),
+        remember: false // Default to false for new registrations
+      };
+      
+      localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
       localStorage.setItem('auth-token', response.token);
       toast.success("Account created successfully");
     } catch (error) {
@@ -118,7 +177,15 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const response = await api.auth.socialLogin(provider, mockUserData);
       
       setUser(response.user);
-      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      
+      // Store user with timestamp and remember flag (social login always remembers)
+      const userWithTimestamp = {
+        user: response.user,
+        timestamp: new Date().getTime(),
+        remember: true
+      };
+      
+      localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
       localStorage.setItem('auth-token', response.token);
       toast.success(`Logged in with ${provider} successfully`);
     } catch (error) {
@@ -136,7 +203,15 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const response = await api.auth.ssoLogin(token);
       
       setUser(response.user);
-      localStorage.setItem('iam-user', JSON.stringify(response.user));
+      
+      // Store user with timestamp and remember flag (SSO always remembers)
+      const userWithTimestamp = {
+        user: response.user,
+        timestamp: new Date().getTime(),
+        remember: true
+      };
+      
+      localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
       localStorage.setItem('auth-token', response.token);
       toast.success("SSO login successful");
     } catch (error) {
@@ -153,28 +228,55 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     localStorage.removeItem('iam-user');
     localStorage.removeItem('auth-token');
     toast.success("Logged out successfully");
+    navigate('/auth');
   };
 
   const updateUserData = (userData: User) => {
     setUser(userData);
-    localStorage.setItem('iam-user', JSON.stringify(userData));
+    
+    // Update stored user data while preserving remember setting
+    const storedUserData = localStorage.getItem('iam-user');
+    if (storedUserData) {
+      const { remember } = JSON.parse(storedUserData);
+      const userWithTimestamp = {
+        user: userData,
+        timestamp: new Date().getTime(),
+        remember
+      };
+      localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
+    } else {
+      const userWithTimestamp = {
+        user: userData,
+        timestamp: new Date().getTime(),
+        remember: false
+      };
+      localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
+    }
   };
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    register,
+    logout,
+    socialLogin,
+    ssoLogin,
+    updateUserData
+  }), [user, isLoading]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        register,
-        logout,
-        socialLogin,
-        ssoLogin,
-        updateUserData
-      }}
-    >
-      {children}
+    <AuthContext.Provider value={contextValue}>
+      {isLoading && currentPath !== '/auth' ? (
+        <div className="fixed inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50">
+          <div className="flex flex-col items-center space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-lg font-medium">Loading your account...</p>
+          </div>
+        </div>
+      ) : children}
     </AuthContext.Provider>
   );
 };

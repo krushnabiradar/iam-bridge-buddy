@@ -13,7 +13,17 @@ import NotFound from './pages/NotFound';
 
 import './App.css';
 
-const queryClient = new QueryClient();
+// Create a client with better caching settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false, // Disable automatic refetching when window gets focus
+    },
+  },
+});
 
 function App() {
   return (
@@ -21,7 +31,15 @@ function App() {
       <ThemeProvider defaultTheme="system" enableSystem>
         <BrowserRouter>
           <AuthProvider>
-            <Toaster position="top-right" closeButton richColors />
+            <Toaster 
+              position="top-right" 
+              closeButton 
+              richColors 
+              toastOptions={{
+                duration: 4000,
+                className: 'toast-enhanced',
+              }}
+            />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />

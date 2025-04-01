@@ -1,4 +1,3 @@
-
 // API utility for interacting with the backend
 
 export const API_BASE_URL = 'http://localhost:5000/api';
@@ -18,8 +17,9 @@ export interface AuthResponse {
     name: string;
     email: string;
     avatar?: string;
-    role?: string;
-    lastLogin?: string; // Add lastLogin to the AuthResponse
+    roles?: any[];
+    isActive?: boolean;
+    lastLogin?: string;
   };
   token: string;
 }
@@ -119,10 +119,8 @@ export const api = {
         method: 'POST', 
         body: { token } 
       }),
-    // Add a new method to get user profile using the token
     verifyToken: () => 
       apiRequest<AuthResponse>('/auth/verify-token', { method: 'GET' }),
-    // Add password reset endpoints
     requestPasswordReset: (email: string) => 
       apiRequest<{ message: string }>('/auth/forgot-password', { 
         method: 'POST', 
@@ -152,4 +150,50 @@ export const api = {
         body: { currentPassword, newPassword }
       }),
   },
+  iam: {
+    getAllRoles: () => 
+      apiRequest('/iam/roles'),
+    createRole: (data: any) => 
+      apiRequest('/iam/roles', { 
+        method: 'POST', 
+        body: data 
+      }),
+    updateRole: (id: string, data: any) => 
+      apiRequest(`/iam/roles/${id}`, { 
+        method: 'PUT', 
+        body: data 
+      }),
+    deleteRole: (id: string) => 
+      apiRequest(`/iam/roles/${id}`, { 
+        method: 'DELETE' 
+      }),
+    
+    getAllPermissions: () => 
+      apiRequest('/iam/permissions'),
+    createPermission: (data: any) => 
+      apiRequest('/iam/permissions', { 
+        method: 'POST', 
+        body: data 
+      }),
+    
+    getUsersWithRoles: () => 
+      apiRequest('/iam/users'),
+    getUserWithRoles: (id: string) => 
+      apiRequest(`/iam/users/${id}`),
+    assignRoleToUser: (userId: string, roleId: string) => 
+      apiRequest('/iam/users/roles/assign', { 
+        method: 'POST', 
+        body: { userId, roleId } 
+      }),
+    removeRoleFromUser: (userId: string, roleId: string) => 
+      apiRequest('/iam/users/roles/remove', { 
+        method: 'POST', 
+        body: { userId, roleId } 
+      }),
+    updateUserStatus: (userId: string, isActive: boolean) => 
+      apiRequest(`/iam/users/${userId}/status`, { 
+        method: 'PUT', 
+        body: { isActive } 
+      })
+  }
 };

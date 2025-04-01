@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from "sonner";
 import { api, AuthResponse, extractAuthFromUrl } from '@/lib/api';
@@ -11,8 +10,11 @@ interface User {
   name: string;
   email: string;
   avatar?: string;
-  roles?: RoleType[]; // Add roles array to the User interface
+  roles?: RoleType[];
+  isActive?: boolean;
   lastLogin?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface AuthContextType {
@@ -29,24 +31,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Create a component that will use the navigation hooks
 const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Memoize the current route to avoid unnecessary re-renders
   const currentPath = useMemo(() => location.pathname, [location.pathname]);
 
-  // Enhanced checkAuth function with better error handling and caching
   const checkAuth = useCallback(async () => {
     try {
-      // Check for auth in URL first (for social login redirect)
       const urlAuth = extractAuthFromUrl();
       if (urlAuth?.user) {
         setUser(urlAuth.user);
-        // Store in localStorage with timestamp for cache expiry
         const userWithTimestamp = {
           user: urlAuth.user,
           timestamp: new Date().getTime(),
@@ -64,19 +61,16 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return;
       }
       
-      // Check localStorage for cached user
       const storedUserData = localStorage.getItem('iam-user');
       if (storedUserData) {
         const { user: storedUser, timestamp, remember } = JSON.parse(storedUserData);
         
-        // Check if cache is valid (24 hours for remember me, 1 hour for regular session)
-        const expiryTime = remember ? 24 * 60 * 60 * 1000 : 60 * 60 * 1000; // 24 hours or 1 hour
+        const expiryTime = remember ? 24 * 60 * 60 * 1000 : 60 * 60 * 1000;
         const isExpired = new Date().getTime() - timestamp > expiryTime;
         
         if (!isExpired) {
           setUser(storedUser);
         } else {
-          // Clear expired cache
           localStorage.removeItem('iam-user');
           localStorage.removeItem('auth-token');
         }
@@ -93,7 +87,6 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     checkAuth();
     
-    // Add event listener for storage changes (for multi-tab support)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'iam-user' || e.key === 'auth-token') {
         checkAuth();
@@ -112,7 +105,6 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const response = await api.auth.login(email, password);
       setUser(response.user);
       
-      // Store user with timestamp and remember flag
       const userWithTimestamp = {
         user: response.user,
         timestamp: new Date().getTime(),
@@ -137,11 +129,10 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const response = await api.auth.register(name, email, password);
       setUser(response.user);
       
-      // Store user with timestamp and remember flag
       const userWithTimestamp = {
         user: response.user,
         timestamp: new Date().getTime(),
-        remember: false // Default to false for new registrations
+        remember: false
       };
       
       localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
@@ -169,7 +160,6 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       setUser(response.user);
       
-      // Store user with timestamp and remember flag (social login always remembers)
       const userWithTimestamp = {
         user: response.user,
         timestamp: new Date().getTime(),
@@ -195,7 +185,6 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       setUser(response.user);
       
-      // Store user with timestamp and remember flag (SSO always remembers)
       const userWithTimestamp = {
         user: response.user,
         timestamp: new Date().getTime(),
@@ -225,7 +214,6 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const updateUserData = (userData: User) => {
     setUser(userData);
     
-    // Update stored user data while preserving remember setting
     const storedUserData = localStorage.getItem('iam-user');
     if (storedUserData) {
       const { remember } = JSON.parse(storedUserData);
@@ -245,7 +233,6 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     user,
     isAuthenticated: !!user,
@@ -272,7 +259,6 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   );
 };
 
-// Create an outer provider that wraps the inner provider
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <NavigationAwareAuthProvider>

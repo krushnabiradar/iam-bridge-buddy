@@ -1,3 +1,4 @@
+
 // Import the response types before they're used
 import { RolesResponse, PermissionsResponse, UsersResponse } from '@/types/api.types';
 
@@ -51,6 +52,15 @@ export function extractAuthFromUrl() {
   return null;
 }
 
+// Helper to log API requests and responses for debugging
+export const logApiCall = (endpoint: string, method: string, response: any, error?: any) => {
+  if (error) {
+    console.error(`API ${method} ${endpoint} failed:`, error);
+    return;
+  }
+  console.log(`API ${method} ${endpoint} response:`, response);
+};
+
 export async function apiRequest<T>(
   endpoint: string,
   options: ApiOptions = {}
@@ -73,6 +83,8 @@ export async function apiRequest<T>(
   }
 
   try {
+    console.log(`Making ${method} request to ${endpoint}`, body ? 'with body:' : '', body || '');
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method,
       headers: { ...defaultHeaders, ...headers },
@@ -82,6 +94,7 @@ export async function apiRequest<T>(
 
     if (!response.ok) {
       const error = await response.json();
+      console.error(`API error (${response.status}) for ${endpoint}:`, error);
       throw new Error(error.message || 'API request failed');
     }
 
@@ -90,7 +103,9 @@ export async function apiRequest<T>(
       return { success: true } as unknown as T;
     }
 
-    return await response.json();
+    const data = await response.json();
+    logApiCall(endpoint, method, data);
+    return data;
   } catch (error) {
     console.error('API request failed:', error);
     throw error;

@@ -16,7 +16,12 @@ exports.authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Find user by ID and populate roles
-    const user = await User.findById(decoded.id).select('-password').populate('roles');
+    const user = await User.findById(decoded.id)
+      .select('-password')
+      .populate({
+        path: 'roles',
+        select: 'name permissions description isDefault' // Include all necessary role fields
+      });
     
     if (!user) {
       return res.status(401).json({ message: 'User not found' });

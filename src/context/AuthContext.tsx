@@ -31,6 +31,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const normalizeUserRoles = (user: any): User => {
+  if (!user) return user;
+  
+  const normalizedUser = { ...user };
+  
+  if (normalizedUser.roles && !Array.isArray(normalizedUser.roles)) {
+    console.warn('Roles is not an array:', normalizedUser.roles);
+    normalizedUser.roles = [];
+  }
+  
+  if (normalizedUser.roles) {
+    console.log('User roles:', normalizedUser.roles);
+  } else {
+    console.log('No roles found in user object');
+    normalizedUser.roles = [];
+  }
+  
+  return normalizedUser;
+};
+
 const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,9 +63,11 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const urlAuth = extractAuthFromUrl();
       if (urlAuth?.user) {
-        setUser(urlAuth.user);
+        const normalizedUser = normalizeUserRoles(urlAuth.user);
+        setUser(normalizedUser);
+        
         const userWithTimestamp = {
-          user: urlAuth.user,
+          user: normalizedUser,
           timestamp: new Date().getTime(),
           remember: true
         };
@@ -69,7 +91,25 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const isExpired = new Date().getTime() - timestamp > expiryTime;
         
         if (!isExpired) {
-          setUser(storedUser);
+          const normalizedUser = normalizeUserRoles(storedUser);
+          setUser(normalizedUser);
+          
+          try {
+            const verifyResponse = await api.auth.verifyToken();
+            if (verifyResponse.user) {
+              const freshUser = normalizeUserRoles(verifyResponse.user);
+              setUser(freshUser);
+              
+              const updatedUserData = {
+                user: freshUser,
+                timestamp: new Date().getTime(),
+                remember
+              };
+              localStorage.setItem('iam-user', JSON.stringify(updatedUserData));
+            }
+          } catch (error) {
+            console.warn('Token verification failed, using stored user data');
+          }
         } else {
           localStorage.removeItem('iam-user');
           localStorage.removeItem('auth-token');

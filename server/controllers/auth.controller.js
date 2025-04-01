@@ -1,3 +1,4 @@
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 const Role = require('../models/role.model');
@@ -9,8 +10,17 @@ const otpStore = new Map();
 
 // Helper to generate JWT
 const generateToken = (user) => {
+  // Extract role IDs to include in the token
+  const roleIds = user.roles.map(role => 
+    typeof role === 'object' ? role._id : role
+  );
+  
   return jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
+    { 
+      id: user._id, 
+      email: user.email, 
+      roles: roleIds, // Include roles in the token
+    },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
@@ -308,13 +318,14 @@ exports.verifyToken = (req, res) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
     
-    // Return user data including lastLogin
+    // Return user data including roles
     const userData = {
       id: user._id,
       name: user.name,
       email: user.email,
       avatar: user.avatar,
-      role: user.role,
+      roles: user.roles, // Make sure roles are included
+      isActive: user.isActive,
       lastLogin: user.lastLogin
     };
     

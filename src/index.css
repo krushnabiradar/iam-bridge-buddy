@@ -100,11 +100,11 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-md;
+    @apply bg-white/80 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-md;
   }
   
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 dark:from-blue-400 dark:to-purple-500;
   }
   
   .hover-lift {
@@ -117,7 +117,7 @@
 
   /* Toast styling enhancements */
   .toast-enhanced {
-    @apply rounded-lg border shadow-lg backdrop-blur-sm;
+    @apply rounded-lg border shadow-lg backdrop-blur-sm dark:bg-slate-900/90 dark:border-slate-800;
   }
 
   /* Auth form improvements */
@@ -127,7 +127,7 @@
 
   /* Shimmer effect for loading states */
   .shimmer {
-    @apply relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent;
+    @apply relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 dark:before:via-white/5 before:to-transparent;
   }
 }
 

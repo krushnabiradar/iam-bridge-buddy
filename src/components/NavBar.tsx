@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Menu, X } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
 
 const NavBar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -39,7 +40,7 @@ const NavBar: React.FC = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-border z-50 animate-fade-in">
+    <nav className="fixed top-0 left-0 right-0 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-border z-50 animate-fade-in">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -70,7 +71,9 @@ const NavBar: React.FC = () => {
             </div>
           )}
 
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center space-x-2">
+            <ThemeToggle />
+            
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -119,8 +122,10 @@ const NavBar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          {/* Mobile menu button and dropdown */}
+          <div className="md:hidden flex items-center space-x-2">
+            <ThemeToggle /> {/* Add ThemeToggle to mobile layout */}
+            
             {isAuthenticated && (
               <Button
                 variant="ghost"
@@ -187,7 +192,7 @@ const NavBar: React.FC = () => {
 
       {/* Mobile menu */}
       {isMobile && mobileMenuOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-sm border-b border-border animate-slide-down">
+        <div className="md:hidden bg-white/95 dark:bg-background/95 backdrop-blur-sm border-b border-border animate-slide-down">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <Link
               to="/"

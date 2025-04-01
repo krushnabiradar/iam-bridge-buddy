@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -125,13 +126,13 @@ const RoleManagement = () => {
   // Fetch roles
   const { data: rolesData, isLoading: isLoadingRoles } = useQuery<RolesResponse>({
     queryKey: ['roles'],
-    queryFn: () => api.iam.getAllRoles(),
+    queryFn: async () => api.iam.getAllRoles(),
   });
 
   // Fetch permissions
   const { data: permissionsData, isLoading: isLoadingPermissions } = useQuery<PermissionsResponse>({
     queryKey: ['permissions'],
-    queryFn: () => api.iam.getAllPermissions(),
+    queryFn: async () => api.iam.getAllPermissions(),
   });
 
   // Create role mutation

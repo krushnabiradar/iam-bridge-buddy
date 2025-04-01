@@ -70,12 +70,12 @@ const UserManagement = () => {
 
   const { data: usersData, isLoading: isLoadingUsers } = useQuery<UsersResponse>({
     queryKey: ['users'],
-    queryFn: async () => api.iam.getUsersWithRoles(),
+    queryFn: api.iam.getUsersWithRoles,
   });
 
   const { data: rolesData, isLoading: isLoadingRoles } = useQuery<RolesResponse>({
     queryKey: ['roles'],
-    queryFn: async () => api.iam.getAllRoles(),
+    queryFn: api.iam.getAllRoles,
   });
 
   const updateUserStatusMutation = useMutation({

@@ -1,3 +1,4 @@
+
 // API utility for interacting with the backend
 
 export const API_BASE_URL = 'http://localhost:5000/api';
@@ -151,49 +152,52 @@ export const api = {
       }),
   },
   iam: {
-    getAllRoles: () => 
-      apiRequest('/iam/roles'),
-    createRole: (data: any) => 
+    getAllRoles: (): Promise<RolesResponse> => 
+      apiRequest<RolesResponse>('/iam/roles'),
+    createRole: (data: any): Promise<{ message: string; role: any }> => 
       apiRequest('/iam/roles', { 
         method: 'POST', 
         body: data 
       }),
-    updateRole: (id: string, data: any) => 
+    updateRole: (id: string, data: any): Promise<{ message: string; role: any }> => 
       apiRequest(`/iam/roles/${id}`, { 
         method: 'PUT', 
         body: data 
       }),
-    deleteRole: (id: string) => 
+    deleteRole: (id: string): Promise<{ message: string }> => 
       apiRequest(`/iam/roles/${id}`, { 
         method: 'DELETE' 
       }),
     
-    getAllPermissions: () => 
-      apiRequest('/iam/permissions'),
-    createPermission: (data: any) => 
+    getAllPermissions: (): Promise<PermissionsResponse> => 
+      apiRequest<PermissionsResponse>('/iam/permissions'),
+    createPermission: (data: any): Promise<{ message: string; permission: any }> => 
       apiRequest('/iam/permissions', { 
         method: 'POST', 
         body: data 
       }),
     
-    getUsersWithRoles: () => 
-      apiRequest('/iam/users'),
-    getUserWithRoles: (id: string) => 
+    getUsersWithRoles: (): Promise<UsersResponse> => 
+      apiRequest<UsersResponse>('/iam/users'),
+    getUserWithRoles: (id: string): Promise<{ message: string; user: any }> => 
       apiRequest(`/iam/users/${id}`),
-    assignRoleToUser: (userId: string, roleId: string) => 
+    assignRoleToUser: (userId: string, roleId: string): Promise<{ message: string; user: any }> => 
       apiRequest('/iam/users/roles/assign', { 
         method: 'POST', 
         body: { userId, roleId } 
       }),
-    removeRoleFromUser: (userId: string, roleId: string) => 
+    removeRoleFromUser: (userId: string, roleId: string): Promise<{ message: string; user: any }> => 
       apiRequest('/iam/users/roles/remove', { 
         method: 'POST', 
         body: { userId, roleId } 
       }),
-    updateUserStatus: (userId: string, isActive: boolean) => 
+    updateUserStatus: (userId: string, isActive: boolean): Promise<{ message: string; user: any }> => 
       apiRequest(`/iam/users/${userId}/status`, { 
         method: 'PUT', 
         body: { isActive } 
       })
   }
 };
+
+// Import the response types from our types file
+import { RolesResponse, PermissionsResponse, UsersResponse } from '@/types/api.types';

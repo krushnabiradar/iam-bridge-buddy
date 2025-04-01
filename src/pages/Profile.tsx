@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -11,9 +12,12 @@ import { toast } from "sonner";
 import { Loader2, User, Lock, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
+import { Badge } from '@/components/ui/badge';
+import { useAuthorization } from '@/context/AuthorizationContext';
 
 const Profile = () => {
   const { user, isAuthenticated, updateUserData } = useAuth();
+  const { userRoles } = useAuthorization();
   const navigate = useNavigate();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -127,10 +131,16 @@ const Profile = () => {
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-muted-foreground">
-                  Role: {user?.role || 'User'}
+                  Roles: {userRoles.length > 0 ? (
+                    <div className="flex flex-wrap justify-center gap-1 mt-1">
+                      {userRoles.map((role, i) => (
+                        <Badge key={i} variant="outline">{role}</Badge>
+                      ))}
+                    </div>
+                  ) : 'No roles assigned'}
                 </p>
                 <p className="text-muted-foreground mt-1">
-                  Member since: {new Date().toLocaleDateString()}
+                  Member since: {new Date(user?.createdAt || Date.now()).toLocaleDateString()}
                 </p>
               </CardContent>
               <CardFooter>
@@ -211,8 +221,14 @@ const Profile = () => {
                         <p className="mt-1">{user?.email}</p>
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-muted-foreground">Role</h3>
-                        <p className="mt-1">{user?.role || 'User'}</p>
+                        <h3 className="text-sm font-medium text-muted-foreground">Roles</h3>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {userRoles.length > 0 ? (
+                            userRoles.map((role, i) => (
+                              <Badge key={i} variant="outline">{role}</Badge>
+                            ))
+                          ) : 'No roles assigned'}
+                        </div>
                       </div>
                       <div>
                         <h3 className="text-sm font-medium text-muted-foreground">Status</h3>

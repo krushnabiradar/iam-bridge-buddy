@@ -8,8 +8,6 @@ const session = require('express-session');
 const passport = require('./config/passport');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
-const iamRoutes = require('./routes/iam.routes');
-const initRoles = require('./scripts/initRoles');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,7 +39,6 @@ app.use(passport.session());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/iam', iamRoutes);
 
 // Default route
 app.get('/', (req, res) => {
@@ -50,12 +47,8 @@ app.get('/', (req, res) => {
 
 // Connect to MongoDB and start server
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/iam-db')
-  .then(async () => {
+  .then(() => {
     console.log('Connected to MongoDB');
-    
-    // Initialize default roles and permissions
-    await initRoles();
-    
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

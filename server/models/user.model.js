@@ -22,13 +22,10 @@ const userSchema = new mongoose.Schema({
       return !this.socialProvider;
     }
   },
-  roles: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Role'
-  }],
-  isActive: {
-    type: Boolean,
-    default: true
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
   },
   avatar: {
     type: String
@@ -68,28 +65,6 @@ userSchema.pre('save', async function(next) {
 // Method to validate password
 userSchema.methods.isValidPassword = async function(password) {
   return await bcrypt.compare(password, this.password);
-};
-
-// Method to check if user has a specific permission
-userSchema.methods.hasPermission = async function(permission) {
-  // Populate roles if not already populated
-  if (!this.populated('roles')) {
-    await this.populate('roles');
-  }
-  
-  // Check if any of the user's roles include the specified permission
-  return this.roles.some(role => role.permissions.includes(permission));
-};
-
-// Method to check if user has a specific role
-userSchema.methods.hasRole = function(roleName) {
-  // Populate roles if not already populated
-  if (!this.populated('roles')) {
-    return false;
-  }
-  
-  // Check if user has the specified role
-  return this.roles.some(role => role.name === roleName);
 };
 
 const User = mongoose.model('User', userSchema);

@@ -3,17 +3,17 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from 'next-themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
-import { AuthorizationProvider } from './context/AuthorizationContext';
 import { Toaster } from 'sonner';
-import { Header } from './components/Header';
+import { ProtectedRoute } from './components/ProtectedRoute';
+
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import Admin from './pages/Admin';
 import ForgotPassword from './pages/ForgotPassword';
-import UserManagement from './pages/admin/UserManagement';
-import RoleManagement from './pages/admin/RoleManagement';
 import NotFound from './pages/NotFound';
+import Unauthorized from './pages/Unauthorized';
 
 import './App.css';
 
@@ -32,38 +32,40 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" enableSystem attribute="class">
+      <ThemeProvider defaultTheme="system" enableSystem>
         <BrowserRouter>
           <AuthProvider>
-            <AuthorizationProvider>
-              <Toaster 
-                position="top-right" 
-                closeButton 
-                richColors 
-                toastOptions={{
-                  duration: 4000,
-                  className: 'toast-enhanced',
-                }}
-              />
-              <div className="min-h-screen bg-background text-foreground">
-                <Header />
-                <main className="container py-6">
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    
-                    {/* Admin Routes */}
-                    <Route path="/admin/users" element={<UserManagement />} />
-                    <Route path="/admin/roles" element={<RoleManagement />} />
-                    
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </main>
-              </div>
-            </AuthorizationProvider>
+            <Toaster 
+              position="top-right" 
+              closeButton 
+              richColors 
+              toastOptions={{
+                duration: 4000,
+                className: 'toast-enhanced',
+              }}
+            />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute requiredRoles={['admin']}>
+                  <Admin />
+                </ProtectedRoute>
+              } />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>

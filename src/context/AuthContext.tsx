@@ -1,17 +1,15 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from "sonner";
 import { api, AuthResponse, extractAuthFromUrl } from '@/lib/api';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { RoleType } from '@/types/api.types';
 
 interface User {
   id: string;
   name: string;
   email: string;
   avatar?: string;
-  roles?: RoleType[]; // Add roles array to the User interface
+  role?: string;
   lastLogin?: string;
 }
 

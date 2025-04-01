@@ -1,6 +1,6 @@
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
-const Role = require('../models/role.model');
 const crypto = require('crypto');
 const emailService = require('../services/email.service');
 
@@ -32,22 +32,15 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    // Find default role
-    const defaultRole = await Role.findOne({ isDefault: true });
-    
     // Create new user
     const user = new User({
       name,
       email,
       password,
-      roles: defaultRole ? [defaultRole._id] : [],
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
     });
 
     await user.save();
-
-    // Populate roles for the response
-    await user.populate('roles');
 
     // Generate JWT
     const token = generateToken(user);
@@ -80,14 +73,9 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     // Find user
-    const user = await User.findOne({ email }).populate('roles');
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Check if user is active
-    if (user.isActive === false) {
-      return res.status(403).json({ message: 'Your account has been deactivated' });
     }
 
     // Check password

@@ -140,7 +140,7 @@ const Profile = () => {
                   ) : 'No roles assigned'}
                 </p>
                 <p className="text-muted-foreground mt-1">
-                  Member since: {new Date(user?.createdAt || Date.now()).toLocaleDateString()}
+                  Member since: {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
                 </p>
               </CardContent>
               <CardFooter>

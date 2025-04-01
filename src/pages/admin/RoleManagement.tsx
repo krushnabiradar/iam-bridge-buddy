@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -530,7 +529,7 @@ const RoleManagement = () => {
               </DialogContent>
             </Dialog>
 
-            {/* Edit Role Dialog - Similar structure to Create Dialog */}
+            {/* Edit Role Dialog */}
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
@@ -541,7 +540,6 @@ const RoleManagement = () => {
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleUpdateRole)} className="space-y-4 pt-4">
-                    {/* Same form fields as for creating */}
                     <FormField
                       control={form.control}
                       name="name"
@@ -593,7 +591,6 @@ const RoleManagement = () => {
                       )}
                     />
                     
-                    {/* Same permissions section as for creating */}
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <Label>Permissions</Label>

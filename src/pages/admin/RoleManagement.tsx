@@ -29,7 +29,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
@@ -41,7 +40,6 @@ import { Input } from '@/components/ui/input';
 import { 
   AlertCircle, 
   Check, 
-  ChevronDown, 
   Edit, 
   Filter, 
   Plus, 
@@ -69,6 +67,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RolesResponse, PermissionsResponse, RoleType, PermissionType } from '@/types/api.types';
 
 // Form schema
 const roleFormSchema = z.object({
@@ -89,7 +88,7 @@ const RoleManagement = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<any>(null);
+  const [selectedRole, setSelectedRole] = useState<RoleType | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingPermission, setIsAddingPermission] = useState(false);
   const [newPermission, setNewPermission] = useState('');
@@ -125,75 +124,19 @@ const RoleManagement = () => {
   }, [isAuthenticated, hasRole, navigate]);
 
   // Fetch roles
-  const { data: rolesData, isLoading: isLoadingRoles } = useQuery({
+  const { data: rolesData, isLoading: isLoadingRoles } = useQuery<RolesResponse>({
     queryKey: ['roles'],
     queryFn: () => api.iam.getAllRoles(),
   });
 
   // Fetch permissions
-  const { data: permissionsData, isLoading: isLoadingPermissions } = useQuery({
+  const { data: permissionsData, isLoading: isLoadingPermissions } = useQuery<PermissionsResponse>({
     queryKey: ['permissions'],
     queryFn: () => api.iam.getAllPermissions(),
   });
 
-  // Create role mutation
-  const createRoleMutation = useMutation({
-    mutationFn: (data: any) => api.iam.createRole(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast.success('Role created successfully');
-      form.reset();
-      setIsCreating(false);
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to create role: ${error.message}`);
-    }
-  });
-
-  // Update role mutation
-  const updateRoleMutation = useMutation({
-    mutationFn: (data: { id: string, role: any }) => 
-      api.iam.updateRole(data.id, data.role),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast.success('Role updated successfully');
-      setIsEditing(false);
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to update role: ${error.message}`);
-    }
-  });
-
-  // Delete role mutation
-  const deleteRoleMutation = useMutation({
-    mutationFn: (id: string) => api.iam.deleteRole(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast.success('Role deleted successfully');
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to delete role: ${error.message}`);
-    }
-  });
-
-  // Create permission mutation
-  const createPermissionMutation = useMutation({
-    mutationFn: (data: any) => api.iam.createPermission(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['permissions'] });
-      toast.success('Permission created successfully');
-      setIsAddingPermission(false);
-      setNewPermission('');
-      setPermissionResource('');
-      setPermissionAction('read');
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to create permission: ${error.message}`);
-    }
-  });
-
   // Filter roles by search term
-  const filteredRoles = rolesData?.roles?.filter((role: any) => {
+  const filteredRoles = rolesData?.roles?.filter((role: RoleType) => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -316,7 +259,7 @@ const RoleManagement = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredRoles?.map((role: any) => (
+                    {filteredRoles?.map((role: RoleType) => (
                       <TableRow key={role._id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center">
@@ -494,7 +437,7 @@ const RoleManagement = () => {
                             </div>
                           ) : permissionsData?.permissions?.length > 0 ? (
                             <div className="grid grid-cols-2 gap-2">
-                              {permissionsData.permissions.map((permission: any) => (
+                              {permissionsData.permissions.map((permission: PermissionType) => (
                                 <Button
                                   key={permission._id}
                                   type="button"
@@ -537,7 +480,7 @@ const RoleManagement = () => {
               </DialogContent>
             </Dialog>
 
-            {/* Edit Role Dialog */}
+            {/* Edit Role Dialog - Similar structure to Create Dialog */}
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
@@ -548,7 +491,7 @@ const RoleManagement = () => {
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleUpdateRole)} className="space-y-4 pt-4">
-                    {/* Same form fields as for creating, just with populated values */}
+                    {/* Same form fields as for creating */}
                     <FormField
                       control={form.control}
                       name="name"
@@ -649,7 +592,7 @@ const RoleManagement = () => {
                             </div>
                           ) : permissionsData?.permissions?.length > 0 ? (
                             <div className="grid grid-cols-2 gap-2">
-                              {permissionsData.permissions.map((permission: any) => (
+                              {permissionsData.permissions.map((permission: PermissionType) => (
                                 <Button
                                   key={permission._id}
                                   type="button"
@@ -757,6 +700,118 @@ const RoleManagement = () => {
       </div>
     </div>
   );
+  
+  // Create role mutation
+  const createRoleMutation = useMutation({
+    mutationFn: (data: any) => api.iam.createRole(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      toast.success('Role created successfully');
+      form.reset();
+      setIsCreating(false);
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to create role: ${error.message}`);
+    }
+  });
+
+  // Update role mutation
+  const updateRoleMutation = useMutation({
+    mutationFn: (data: { id: string, role: any }) => 
+      api.iam.updateRole(data.id, data.role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      toast.success('Role updated successfully');
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to update role: ${error.message}`);
+    }
+  });
+
+  // Delete role mutation
+  const deleteRoleMutation = useMutation({
+    mutationFn: (id: string) => api.iam.deleteRole(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      toast.success('Role deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to delete role: ${error.message}`);
+    }
+  });
+
+  // Create permission mutation
+  const createPermissionMutation = useMutation({
+    mutationFn: (data: any) => api.iam.createPermission(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['permissions'] });
+      toast.success('Permission created successfully');
+      setIsAddingPermission(false);
+      setNewPermission('');
+      setPermissionResource('');
+      setPermissionAction('read');
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to create permission: ${error.message}`);
+    }
+  });
+
+  // Handler functions
+  function onSubmit(data: RoleFormValues) {
+    createRoleMutation.mutate(data);
+  }
+
+  function handleUpdateRole(data: RoleFormValues) {
+    if (selectedRole) {
+      updateRoleMutation.mutate({ id: selectedRole._id, role: data });
+    }
+  }
+
+  function handleDeleteRole(id: string) {
+    if (window.confirm('Are you sure you want to delete this role?')) {
+      deleteRoleMutation.mutate(id);
+    }
+  }
+
+  function setupRoleEdit(role: RoleType) {
+    setSelectedRole(role);
+    form.reset({
+      name: role.name,
+      description: role.description || '',
+      isDefault: role.isDefault || false,
+      permissions: role.permissions || [],
+    });
+    setIsEditing(true);
+  }
+
+  function handleCreatePermission() {
+    if (!newPermission || !permissionResource) {
+      toast.error('Permission name and resource are required');
+      return;
+    }
+
+    const permissionData = {
+      name: newPermission,
+      description: `Permission to ${permissionAction} ${permissionResource}`,
+      resource: permissionResource,
+      action: permissionAction
+    };
+
+    createPermissionMutation.mutate(permissionData);
+  }
+
+  function addPermissionToRole(permission: string) {
+    const currentPermissions = form.getValues('permissions') || [];
+    if (!currentPermissions.includes(permission)) {
+      form.setValue('permissions', [...currentPermissions, permission]);
+    }
+  }
+
+  function removePermissionFromRole(permission: string) {
+    const currentPermissions = form.getValues('permissions') || [];
+    form.setValue('permissions', currentPermissions.filter(p => p !== permission));
+  }
 };
 
 export default RoleManagement;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -28,7 +27,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -37,16 +35,15 @@ import { Switch } from '@/components/ui/switch';
 import { 
   AlertCircle, 
   Check, 
-  ChevronDown, 
   Filter, 
   Plus, 
   Search, 
   Shield, 
-  User, 
   UserCog, 
   X 
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { UsersResponse, RolesResponse, UserType, RoleType } from '@/types/api.types';
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -54,10 +51,9 @@ const UserManagement = () => {
   const { hasRole } = useAuthorization();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
 
-  // Redirect if not authenticated or not admin
   React.useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
@@ -71,19 +67,16 @@ const UserManagement = () => {
     }
   }, [isAuthenticated, hasRole, navigate]);
 
-  // Fetch users
-  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery<UsersResponse>({
     queryKey: ['users'],
     queryFn: () => api.iam.getUsersWithRoles(),
   });
 
-  // Fetch roles
-  const { data: rolesData, isLoading: isLoadingRoles } = useQuery({
+  const { data: rolesData, isLoading: isLoadingRoles } = useQuery<RolesResponse>({
     queryKey: ['roles'],
     queryFn: () => api.iam.getAllRoles(),
   });
 
-  // Update user status mutation
   const updateUserStatusMutation = useMutation({
     mutationFn: ({ userId, isActive }: { userId: string, isActive: boolean }) => 
       api.iam.updateUserStatus(userId, isActive),
@@ -96,7 +89,6 @@ const UserManagement = () => {
     }
   });
 
-  // Assign role mutation
   const assignRoleMutation = useMutation({
     mutationFn: ({ userId, roleId }: { userId: string, roleId: string }) => 
       api.iam.assignRoleToUser(userId, roleId),
@@ -110,7 +102,6 @@ const UserManagement = () => {
     }
   });
 
-  // Remove role mutation
   const removeRoleMutation = useMutation({
     mutationFn: ({ userId, roleId }: { userId: string, roleId: string }) => 
       api.iam.removeRoleFromUser(userId, roleId),
@@ -123,8 +114,7 @@ const UserManagement = () => {
     }
   });
 
-  // Filter users by search term
-  const filteredUsers = usersData?.users?.filter((user: any) => {
+  const filteredUsers = usersData?.users?.filter((user: UserType) => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -133,43 +123,37 @@ const UserManagement = () => {
     );
   });
 
-  // Handle user status toggle
-  const handleStatusToggle = (userId: string, currentStatus: boolean) => {
-    updateUserStatusMutation.mutate({ userId, isActive: !currentStatus });
-  };
-
-  // Handle role assignment
-  const handleAssignRole = (roleId: string) => {
-    if (selectedUser) {
-      assignRoleMutation.mutate({ userId: selectedUser.id, roleId });
-    }
-  };
-
-  // Handle role removal
-  const handleRemoveRole = (userId: string, roleId: string) => {
-    removeRoleMutation.mutate({ userId, roleId });
-  };
-
-  // Open role dialog for a user
-  const openRoleDialog = (user: any) => {
-    setSelectedUser(user);
-    setShowRoleDialog(true);
-  };
-
-  // Check if user has a specific role
-  const userHasRole = (user: any, roleName: string) => {
-    return user.roles?.some((role: any) => role.name === roleName);
-  };
-
-  // Get initials for avatar
-  const getInitials = (name: string) => {
+  function getInitials(name: string) {
     return name
       .split(' ')
       .map(part => part[0])
       .join('')
       .toUpperCase()
       .substring(0, 2);
-  };
+  }
+
+  function handleStatusToggle(userId: string, currentStatus: boolean) {
+    updateUserStatusMutation.mutate({ userId, isActive: !currentStatus });
+  }
+
+  function handleAssignRole(roleId: string) {
+    if (selectedUser) {
+      assignRoleMutation.mutate({ userId: selectedUser._id, roleId });
+    }
+  }
+
+  function handleRemoveRole(userId: string, roleId: string) {
+    removeRoleMutation.mutate({ userId, roleId });
+  }
+
+  function openRoleDialog(user: UserType) {
+    setSelectedUser(user);
+    setShowRoleDialog(true);
+  }
+
+  function userHasRole(user: UserType, roleName: string) {
+    return user.roles?.some((role: RoleType) => role.name === roleName);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
@@ -224,7 +208,7 @@ const UserManagement = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers?.map((user: any) => (
+                    {filteredUsers?.map((user: UserType) => (
                       <TableRow key={user._id}>
                         <TableCell>
                           <Avatar className="h-8 w-8">
@@ -247,7 +231,7 @@ const UserManagement = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {user.roles?.map((role: any) => (
+                            {user.roles?.map((role: RoleType) => (
                               <Badge key={role._id} variant="outline" className="flex items-center gap-1">
                                 {role.name}
                                 <button
@@ -296,7 +280,6 @@ const UserManagement = () => {
               </div>
             )}
 
-            {/* Role Assignment Dialog */}
             <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
               <DialogContent>
                 <DialogHeader>
@@ -312,9 +295,8 @@ const UserManagement = () => {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {rolesData?.roles?.map((role: any) => {
-                        // Check if user already has this role
-                        const hasRole = selectedUser?.roles?.some((r: any) => r._id === role._id);
+                      {rolesData?.roles?.map((role: RoleType) => {
+                        const hasRole = selectedUser?.roles?.some((r: RoleType) => r._id === role._id);
                         
                         return (
                           <div key={role._id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">

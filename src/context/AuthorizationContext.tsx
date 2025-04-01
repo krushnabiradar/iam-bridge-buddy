@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { RoleType } from '@/types/api.types';
 
 interface AuthorizationContextType {
   hasRole: (roleName: string) => boolean;
@@ -24,11 +25,11 @@ export const AuthorizationProvider: React.FC<{ children: React.ReactNode }> = ({
       const roles = user.roles || [];
       
       // Create array of role names
-      const roleNames = roles.map((role: any) => role.name);
+      const roleNames = roles.map((role: RoleType) => role.name);
       setUserRoles(roleNames);
       
       // Create array of all permissions from all roles
-      const permissions = roles.reduce((acc: string[], role: any) => {
+      const permissions = roles.reduce((acc: string[], role: RoleType) => {
         return [...acc, ...(role.permissions || [])];
       }, []);
       

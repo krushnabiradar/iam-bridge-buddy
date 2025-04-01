@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { AuthorizationProvider } from './context/AuthorizationContext';
 import { Toaster } from 'sonner';
-import { Header } from './components/Header';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
@@ -32,7 +31,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" enableSystem attribute="class">
+      <ThemeProvider defaultTheme="system" enableSystem>
         <BrowserRouter>
           <AuthProvider>
             <AuthorizationProvider>
@@ -45,24 +44,19 @@ function App() {
                   className: 'toast-enhanced',
                 }}
               />
-              <div className="min-h-screen bg-background text-foreground">
-                <Header />
-                <main className="container py-6">
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    
-                    {/* Admin Routes */}
-                    <Route path="/admin/users" element={<UserManagement />} />
-                    <Route path="/admin/roles" element={<RoleManagement />} />
-                    
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </main>
-              </div>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin/users" element={<UserManagement />} />
+                <Route path="/admin/roles" element={<RoleManagement />} />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             </AuthorizationProvider>
           </AuthProvider>
         </BrowserRouter>

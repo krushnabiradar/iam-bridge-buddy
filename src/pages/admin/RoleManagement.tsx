@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -68,7 +68,6 @@ import {
 } from "@/components/ui/select";
 import { RolesResponse, PermissionsResponse, RoleType, PermissionType } from '@/types/api.types';
 
-// Form schema
 const roleFormSchema = z.object({
   name: z.string().min(2, {
     message: "Role name must be at least 2 characters.",
@@ -94,7 +93,6 @@ const RoleManagement = () => {
   const [permissionResource, setPermissionResource] = useState('');
   const [permissionAction, setPermissionAction] = useState('read');
 
-  // Default form values
   const defaultValues: Partial<RoleFormValues> = {
     name: '',
     description: '',
@@ -102,13 +100,11 @@ const RoleManagement = () => {
     permissions: [],
   };
 
-  // Initialize form
   const form = useForm<RoleFormValues>({
     resolver: zodResolver(roleFormSchema),
     defaultValues,
   });
 
-  // Redirect if not authenticated or not admin
   React.useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
@@ -122,19 +118,50 @@ const RoleManagement = () => {
     }
   }, [isAuthenticated, hasRole, navigate]);
 
-  // Fetch roles
-  const { data: rolesData, isLoading: isLoadingRoles } = useQuery<RolesResponse>({
+  const { data: rolesData, isLoading: isLoadingRoles, error: rolesError } = useQuery<RolesResponse>({
     queryKey: ['roles'],
-    queryFn: api.iam.getAllRoles,
+    queryFn: () => {
+      console.log('Fetching roles...');
+      return api.iam.getAllRoles()
+        .then(data => {
+          console.log('Roles data received:', data);
+          return data;
+        })
+        .catch(err => {
+          console.error('Error fetching roles:', err);
+          throw err;
+        });
+    },
   });
 
-  // Fetch permissions
-  const { data: permissionsData, isLoading: isLoadingPermissions } = useQuery<PermissionsResponse>({
+  useEffect(() => {
+    if (rolesError) {
+      console.error('Roles query error:', rolesError);
+    }
+  }, [rolesError]);
+
+  const { data: permissionsData, isLoading: isLoadingPermissions, error: permissionsError } = useQuery<PermissionsResponse>({
     queryKey: ['permissions'],
-    queryFn: api.iam.getAllPermissions,
+    queryFn: () => {
+      console.log('Fetching permissions...');
+      return api.iam.getAllPermissions()
+        .then(data => {
+          console.log('Permissions data received:', data);
+          return data;
+        })
+        .catch(err => {
+          console.error('Error fetching permissions:', err);
+          throw err;
+        });
+    },
   });
 
-  // Create role mutation
+  useEffect(() => {
+    if (permissionsError) {
+      console.error('Permissions query error:', permissionsError);
+    }
+  }, [permissionsError]);
+
   const createRoleMutation = useMutation({
     mutationFn: (data: RoleFormValues) => api.iam.createRole(data),
     onSuccess: () => {
@@ -148,7 +175,6 @@ const RoleManagement = () => {
     }
   });
 
-  // Update role mutation
   const updateRoleMutation = useMutation({
     mutationFn: (data: { id: string, role: RoleFormValues }) => 
       api.iam.updateRole(data.id, data.role),
@@ -162,7 +188,6 @@ const RoleManagement = () => {
     }
   });
 
-  // Delete role mutation
   const deleteRoleMutation = useMutation({
     mutationFn: (id: string) => api.iam.deleteRole(id),
     onSuccess: () => {
@@ -174,7 +199,6 @@ const RoleManagement = () => {
     }
   });
 
-  // Create permission mutation
   const createPermissionMutation = useMutation({
     mutationFn: (data: any) => api.iam.createPermission(data),
     onSuccess: () => {
@@ -190,17 +214,29 @@ const RoleManagement = () => {
     }
   });
 
-  // Filter roles by search term
-  const filteredRoles = rolesData?.roles?.filter((role: RoleType) => {
-    if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      role.name.toLowerCase().includes(searchLower) ||
-      (role.description && role.description.toLowerCase().includes(searchLower))
-    );
-  });
+  const getRoles = () => {
+    if (!rolesData) return [];
+    return rolesData.roles || [];
+  };
 
-  // Handler functions
+  const getPermissions = () => {
+    if (!permissionsData) return [];
+    return permissionsData.permissions || [];
+  };
+
+  const filteredRoles = React.useMemo(() => {
+    const roles = getRoles();
+    if (!searchTerm) return roles;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return roles.filter((role: RoleType) => {
+      return (
+        role.name.toLowerCase().includes(searchLower) ||
+        (role.description && role.description.toLowerCase().includes(searchLower))
+      );
+    });
+  }, [searchTerm, rolesData]);
+
   const onSubmit = (data: RoleFormValues) => {
     createRoleMutation.mutate(data);
   };
@@ -295,6 +331,21 @@ const RoleManagement = () => {
                   <p className="text-sm text-muted-foreground">Loading roles...</p>
                 </div>
               </div>
+            ) : rolesError ? (
+              <div className="flex justify-center p-8">
+                <div className="flex flex-col items-center space-y-2 text-destructive">
+                  <AlertCircle className="h-8 w-8" />
+                  <p>Failed to load roles. Please try again.</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ['roles'] });
+                    }}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
             ) : (
               <div className="rounded-md border">
                 <Table>
@@ -376,7 +427,6 @@ const RoleManagement = () => {
               </div>
             )}
 
-            {/* Create Role Dialog */}
             <Dialog open={isCreating} onOpenChange={setIsCreating}>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
@@ -484,9 +534,9 @@ const RoleManagement = () => {
                             <div className="flex justify-center py-4">
                               <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-primary"></div>
                             </div>
-                          ) : permissionsData?.permissions?.length > 0 ? (
+                          ) : getPermissions().length > 0 ? (
                             <div className="grid grid-cols-2 gap-2">
-                              {permissionsData.permissions.map((permission: PermissionType) => (
+                              {getPermissions().map((permission: PermissionType) => (
                                 <Button
                                   key={permission._id}
                                   type="button"
@@ -529,7 +579,6 @@ const RoleManagement = () => {
               </DialogContent>
             </Dialog>
 
-            {/* Edit Role Dialog */}
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
@@ -637,9 +686,9 @@ const RoleManagement = () => {
                             <div className="flex justify-center py-4">
                               <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-primary"></div>
                             </div>
-                          ) : permissionsData?.permissions?.length > 0 ? (
+                          ) : getPermissions().length > 0 ? (
                             <div className="grid grid-cols-2 gap-2">
-                              {permissionsData.permissions.map((permission: PermissionType) => (
+                              {getPermissions().map((permission: PermissionType) => (
                                 <Button
                                   key={permission._id}
                                   type="button"
@@ -682,7 +731,6 @@ const RoleManagement = () => {
               </DialogContent>
             </Dialog>
 
-            {/* Add Permission Dialog */}
             <Dialog open={isAddingPermission} onOpenChange={setIsAddingPermission}>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>

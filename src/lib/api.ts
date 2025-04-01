@@ -1,6 +1,7 @@
+// Import the response types before they're used
+import { RolesResponse, PermissionsResponse, UsersResponse } from '@/types/api.types';
 
 // API utility for interacting with the backend
-
 export const API_BASE_URL = 'http://localhost:5000/api';
 
 interface ApiOptions {
@@ -198,6 +199,3 @@ export const api = {
       })
   }
 };
-
-// Import the response types from our types file
-import { RolesResponse, PermissionsResponse, UsersResponse } from '@/types/api.types';

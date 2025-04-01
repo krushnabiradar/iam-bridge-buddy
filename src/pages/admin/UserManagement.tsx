@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -68,15 +67,64 @@ const UserManagement = () => {
     }
   }, [isAuthenticated, hasRole, navigate]);
 
-  const { data: usersData, isLoading: isLoadingUsers } = useQuery<UsersResponse>({
+  const { 
+    data: usersData, 
+    isLoading: isLoadingUsers, 
+    error: usersError 
+  } = useQuery<UsersResponse>({
     queryKey: ['users'],
-    queryFn: api.iam.getUsersWithRoles,
+    queryFn: () => {
+      console.log('Fetching users...');
+      return api.iam.getUsersWithRoles()
+        .then(data => {
+          console.log('Users data received:', data);
+          return data;
+        })
+        .catch(err => {
+          console.error('Error fetching users:', err);
+          throw err;
+        });
+    },
   });
 
-  const { data: rolesData, isLoading: isLoadingRoles } = useQuery<RolesResponse>({
+  const { 
+    data: rolesData, 
+    isLoading: isLoadingRoles,
+    error: rolesError 
+  } = useQuery<RolesResponse>({
     queryKey: ['roles'],
-    queryFn: api.iam.getAllRoles,
+    queryFn: () => {
+      console.log('Fetching roles from UserManagement...');
+      return api.iam.getAllRoles()
+        .then(data => {
+          console.log('Roles data received in UserManagement:', data);
+          return data;
+        })
+        .catch(err => {
+          console.error('Error fetching roles in UserManagement:', err);
+          throw err;
+        });
+    },
   });
+
+  useEffect(() => {
+    if (usersError) {
+      console.error('Users query error:', usersError);
+    }
+    if (rolesError) {
+      console.error('Roles query error in UserManagement:', rolesError);
+    }
+  }, [usersError, rolesError]);
+
+  const getUsers = () => {
+    if (!usersData) return [];
+    return usersData.users || [];
+  };
+
+  const getRoles = () => {
+    if (!rolesData) return [];
+    return rolesData.roles || [];
+  };
 
   const updateUserStatusMutation = useMutation({
     mutationFn: ({ userId, isActive }: { userId: string, isActive: boolean }) => 
@@ -115,14 +163,18 @@ const UserManagement = () => {
     }
   });
 
-  const filteredUsers = usersData?.users?.filter((user: UserType) => {
-    if (!searchTerm) return true;
+  const filteredUsers = React.useMemo(() => {
+    const users = getUsers();
+    if (!searchTerm) return users;
+    
     const searchLower = searchTerm.toLowerCase();
-    return (
-      user.name.toLowerCase().includes(searchLower) ||
-      user.email.toLowerCase().includes(searchLower)
-    );
-  });
+    return users.filter((user: UserType) => {
+      return (
+        user.name.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [searchTerm, usersData]);
 
   function getInitials(name: string) {
     return name

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,7 +74,6 @@ const OTPDigitInput: React.FC<OTPDigitInputProps> = ({
   );
 };
 
-// Main component
 const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
   const [step, setStep] = useState<'generate' | 'verify'>('generate');
   const [isLoading, setIsLoading] = useState(false);
@@ -83,12 +81,10 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
   const [secret, setSecret] = useState('');
   const [activeTab, setActiveTab] = useState<'app' | 'manual'>('app');
   
-  // OTP input state
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
   const [activeInput, setActiveInput] = useState(0);
   const [hasFakeCaret, setHasFakeCaret] = useState(true);
   
-  // Handle QR code generation on mount
   useEffect(() => {
     generateQrCode();
   }, []);
@@ -96,9 +92,9 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
   const generateQrCode = async () => {
     setIsLoading(true);
     try {
-      const response = await api.mfa.setupMfa();
+      const response = await api.auth.generateMfaSecret();
       setQrCodeUrl(response.qrCodeUrl);
-      setSecret(response.secret);
+      setSecret(response.secretKey);
       setIsLoading(false);
     } catch (error) {
       console.error('Error generating QR code:', error);
@@ -116,7 +112,7 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
     
     setIsLoading(true);
     try {
-      await api.mfa.enableMfa(token);
+      await api.auth.enableMfa(token);
       toast.success('MFA successfully enabled for your account');
       if (onSetupComplete) {
         onSetupComplete();
@@ -134,20 +130,17 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
     toast.success('Secret key copied to clipboard');
   };
   
-  // OTP input handlers
   const handleCharChange = (index: number, char: string) => {
     const newOtpCode = [...otpCode];
     newOtpCode[index] = char;
     setOtpCode(newOtpCode);
     
-    // Auto-advance to next input if character was entered
     if (char && index < 5) {
       setActiveInput(index + 1);
     }
   };
   
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    // Handle backspace to clear current field and move to previous
     if (e.key === 'Backspace') {
       if (otpCode[index]) {
         const newOtpCode = [...otpCode];
@@ -156,17 +149,11 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
       } else if (index > 0) {
         setActiveInput(index - 1);
       }
-    }
-    // Handle left arrow key
-    else if (e.key === 'ArrowLeft' && index > 0) {
+    } else if (e.key === 'ArrowLeft' && index > 0) {
       setActiveInput(index - 1);
-    }
-    // Handle right arrow key
-    else if (e.key === 'ArrowRight' && index < 5) {
+    } else if (e.key === 'ArrowRight' && index < 5) {
       setActiveInput(index + 1);
-    }
-    // Handle paste event
-    else if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
+    } else if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       navigator.clipboard.readText().then(text => {
         const pastedDigits = text.trim().replace(/\D/g, '').substring(0, 6).split('');
@@ -180,10 +167,8 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
         
         setOtpCode(newOtpCode);
         if (pastedDigits.length === 6) {
-          // Focus on the last input after pasting a complete code
           setActiveInput(5);
         } else if (pastedDigits.length > 0) {
-          // Focus on the next empty input
           setActiveInput(Math.min(pastedDigits.length, 5));
         }
       });

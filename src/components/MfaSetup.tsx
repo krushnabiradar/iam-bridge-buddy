@@ -1,79 +1,18 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Copy, Terminal, Smartphone } from 'lucide-react';
 import { api } from '@/lib/api';
+import OTPDigitInput from '@/components/ui/otp-input';
+import { useOtp } from '@/hooks/use-otp';
 
 interface MfaSetupProps {
   onSetupComplete?: () => void;
   onCancel?: () => void;
 }
-
-// OTP input component
-interface OTPDigitInputProps {
-  index: number;
-  isActive: boolean;
-  char: string;
-  hasFakeCaret: boolean;
-  onCharChange: (index: number, char: string) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>, index: number) => void;
-  onFocus: (index: number) => void;
-}
-
-const OTPDigitInput: React.FC<OTPDigitInputProps> = ({
-  index,
-  isActive,
-  char,
-  hasFakeCaret,
-  onCharChange,
-  onKeyDown,
-  onFocus,
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  
-  useEffect(() => {
-    if (isActive && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isActive]);
-
-  return (
-    <div 
-      className={`relative w-10 h-14 flex items-center justify-center border-2 ${
-        isActive ? 'border-primary' : 'border-input'
-      } rounded-md bg-background`}
-      onClick={() => onFocus(index)}
-    >
-      <input
-        ref={inputRef}
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        maxLength={1}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        value={char}
-        onChange={(e) => {
-          const val = e.target.value;
-          if (/^[0-9]?$/.test(val)) {
-            onCharChange(index, val);
-          }
-        }}
-        onKeyDown={(e) => onKeyDown(e, index)}
-        onFocus={() => onFocus(index)}
-      />
-      <div className="text-xl font-medium">
-        {char}
-        {hasFakeCaret && isActive && (
-          <div className="absolute bottom-2.5 w-[1px] h-[60%] bg-primary animate-blink"></div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
   const [step, setStep] = useState<'generate' | 'verify'>('generate');
@@ -82,9 +21,15 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
   const [secret, setSecret] = useState('');
   const [activeTab, setActiveTab] = useState<'app' | 'manual'>('app');
   
-  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
-  const [activeInput, setActiveInput] = useState(0);
-  const [hasFakeCaret, setHasFakeCaret] = useState(true);
+  const {
+    otpCode,
+    activeInput,
+    hasFakeCaret,
+    handleCharChange,
+    handleKeyDown,
+    setActiveInput,
+    getToken
+  } = useOtp();
   
   useEffect(() => {
     generateQrCode();
@@ -105,7 +50,7 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
   };
   
   const verifyMfa = async () => {
-    const token = otpCode.join('');
+    const token = getToken();
     if (token.length !== 6) {
       toast.error('Please enter a 6-digit verification code');
       return;
@@ -129,51 +74,6 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
   const copySecretToClipboard = () => {
     navigator.clipboard.writeText(secret);
     toast.success('Secret key copied to clipboard');
-  };
-  
-  const handleCharChange = (index: number, char: string) => {
-    const newOtpCode = [...otpCode];
-    newOtpCode[index] = char;
-    setOtpCode(newOtpCode);
-    
-    if (char && index < 5) {
-      setActiveInput(index + 1);
-    }
-  };
-  
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === 'Backspace') {
-      if (otpCode[index]) {
-        const newOtpCode = [...otpCode];
-        newOtpCode[index] = '';
-        setOtpCode(newOtpCode);
-      } else if (index > 0) {
-        setActiveInput(index - 1);
-      }
-    } else if (e.key === 'ArrowLeft' && index > 0) {
-      setActiveInput(index - 1);
-    } else if (e.key === 'ArrowRight' && index < 5) {
-      setActiveInput(index + 1);
-    } else if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      navigator.clipboard.readText().then(text => {
-        const pastedDigits = text.trim().replace(/\D/g, '').substring(0, 6).split('');
-        const newOtpCode = [...otpCode];
-        
-        pastedDigits.forEach((digit, i) => {
-          if (i < 6) {
-            newOtpCode[i] = digit;
-          }
-        });
-        
-        setOtpCode(newOtpCode);
-        if (pastedDigits.length === 6) {
-          setActiveInput(5);
-        } else if (pastedDigits.length > 0) {
-          setActiveInput(Math.min(pastedDigits.length, 5));
-        }
-      });
-    }
   };
   
   const renderOtpInputs = () => {
@@ -286,7 +186,7 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
             </Button>
             <Button 
               onClick={verifyMfa} 
-              disabled={isLoading || otpCode.join('').length !== 6}
+              disabled={isLoading || getToken().length !== 6}
             >
               {isLoading ? (
                 <>

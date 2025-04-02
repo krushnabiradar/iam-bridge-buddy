@@ -5,13 +5,6 @@ import { RolesResponse, PermissionsResponse, UsersResponse } from '@/types/api.t
 // API utility for interacting with the backend
 export const API_BASE_URL = 'http://localhost:5000/api';
 
-interface ApiOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  body?: any;
-  headers?: Record<string, string>;
-  credentials?: RequestCredentials;
-}
-
 // Define response types
 export interface AuthResponse {
   message: string;
@@ -27,7 +20,23 @@ export interface AuthResponse {
   token: string;
 }
 
-// Function to extract authentication token from URL
+interface ApiOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  body?: any;
+  headers?: Record<string, string>;
+  credentials?: RequestCredentials;
+}
+
+interface ApiError extends Error {
+  status?: number;
+  code?: string;
+  data?: any;
+}
+
+/**
+ * Extract authentication token from URL
+ * Useful for social login redirects
+ */
 export function extractAuthFromUrl() {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
@@ -52,7 +61,9 @@ export function extractAuthFromUrl() {
   return null;
 }
 
-// Helper to log API requests and responses for debugging
+/**
+ * Helper to log API requests and responses for debugging
+ */
 export const logApiCall = (endpoint: string, method: string, response: any, error?: any) => {
   if (error) {
     console.error(`API ${method} ${endpoint} failed:`, error);
@@ -61,6 +72,9 @@ export const logApiCall = (endpoint: string, method: string, response: any, erro
   console.log(`API ${method} ${endpoint} response:`, response);
 };
 
+/**
+ * Main API request function with improved error handling and typing
+ */
 export async function apiRequest<T>(
   endpoint: string,
   options: ApiOptions = {}
@@ -92,10 +106,14 @@ export async function apiRequest<T>(
       credentials
     });
 
+    // Better error handling with detailed information
     if (!response.ok) {
-      const error = await response.json();
-      console.error(`API error (${response.status}) for ${endpoint}:`, error);
-      throw new Error(error.message || 'API request failed');
+      const errorData = await response.json().catch(() => ({}));
+      const error = new Error(errorData.message || 'API request failed') as ApiError;
+      error.status = response.status;
+      error.code = errorData.code;
+      error.data = errorData;
+      throw error;
     }
 
     // For DELETE requests that might not return content
@@ -107,11 +125,14 @@ export async function apiRequest<T>(
     logApiCall(endpoint, method, data);
     return data;
   } catch (error) {
-    console.error('API request failed:', error);
+    console.error(`API request to ${endpoint} failed:`, error);
     throw error;
   }
 }
 
+/**
+ * API utility functions grouped by domain
+ */
 export const api = {
   auth: {
     login: (email: string, password: string) => 
@@ -125,7 +146,7 @@ export const api = {
         body: { name, email, password } 
       }),
     logout: () => 
-      apiRequest('/auth/logout', { method: 'POST' }),
+      apiRequest<{message: string}>('/auth/logout', { method: 'POST' }),
     socialLogin: (provider: string, userData: any) => 
       apiRequest<AuthResponse>('/auth/social', { 
         method: 'POST', 
@@ -155,9 +176,9 @@ export const api = {
       }),
   },
   user: {
-    getProfile: () => apiRequest('/user/profile'),
+    getProfile: () => apiRequest<{message: string, user: any}>('/user/profile'),
     updateProfile: (data: any) => 
-      apiRequest('/user/profile', { 
+      apiRequest<{message: string, user: any}>('/user/profile', { 
         method: 'PUT', 
         body: data 
       }),
@@ -168,47 +189,54 @@ export const api = {
       }),
   },
   iam: {
-    getAllRoles: (): Promise<RolesResponse> => 
+    // Roles
+    getAllRoles: () => 
       apiRequest<RolesResponse>('/iam/roles'),
-    createRole: (data: any): Promise<{ message: string; role: any }> => 
-      apiRequest('/iam/roles', { 
+    getRoleById: (id: string) =>
+      apiRequest<{message: string, role: any}>(`/iam/roles/${id}`),
+    createRole: (data: any) => 
+      apiRequest<{ message: string; role: any }>('/iam/roles', { 
         method: 'POST', 
         body: data 
       }),
-    updateRole: (id: string, data: any): Promise<{ message: string; role: any }> => 
-      apiRequest(`/iam/roles/${id}`, { 
+    updateRole: (id: string, data: any) => 
+      apiRequest<{ message: string; role: any }>(`/iam/roles/${id}`, { 
         method: 'PUT', 
         body: data 
       }),
-    deleteRole: (id: string): Promise<{ message: string }> => 
-      apiRequest(`/iam/roles/${id}`, { 
+    deleteRole: (id: string) => 
+      apiRequest<{ message: string }>(`/iam/roles/${id}`, { 
         method: 'DELETE' 
       }),
     
-    getAllPermissions: (): Promise<PermissionsResponse> => 
+    // Permissions
+    getAllPermissions: () => 
       apiRequest<PermissionsResponse>('/iam/permissions'),
-    createPermission: (data: any): Promise<{ message: string; permission: any }> => 
-      apiRequest('/iam/permissions', { 
+    getPermissionById: (id: string) =>
+      apiRequest<{message: string, permission: any}>(`/iam/permissions/${id}`),
+    createPermission: (data: any) => 
+      apiRequest<{ message: string; permission: any }>('/iam/permissions', { 
         method: 'POST', 
         body: data 
       }),
     
-    getUsersWithRoles: (): Promise<UsersResponse> => 
+    // Users
+    getUsersWithRoles: () => 
       apiRequest<UsersResponse>('/iam/users'),
-    getUserWithRoles: (id: string): Promise<{ message: string; user: any }> => 
-      apiRequest(`/iam/users/${id}`),
-    assignRoleToUser: (userId: string, roleId: string): Promise<{ message: string; user: any }> => 
-      apiRequest('/iam/users/roles/assign', { 
+    getUserWithRoles: (id: string) => 
+      apiRequest<{ message: string; user: any }>(`/iam/users/${id}`),
+    assignRoleToUser: (userId: string, roleId: string) => 
+      apiRequest<{ message: string; user: any }>('/iam/users/roles/assign', { 
         method: 'POST', 
         body: { userId, roleId } 
       }),
-    removeRoleFromUser: (userId: string, roleId: string): Promise<{ message: string; user: any }> => 
-      apiRequest('/iam/users/roles/remove', { 
+    removeRoleFromUser: (userId: string, roleId: string) => 
+      apiRequest<{ message: string; user: any }>('/iam/users/roles/remove', { 
         method: 'POST', 
         body: { userId, roleId } 
       }),
-    updateUserStatus: (userId: string, isActive: boolean): Promise<{ message: string; user: any }> => 
-      apiRequest(`/iam/users/${userId}/status`, { 
+    updateUserStatus: (userId: string, isActive: boolean) => 
+      apiRequest<{ message: string; user: any }>(`/iam/users/${userId}/status`, { 
         method: 'PUT', 
         body: { isActive } 
       })

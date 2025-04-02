@@ -259,5 +259,29 @@ export const api = {
         method: 'PUT', 
         body: { isActive } 
       })
+  },
+  notifications: {
+    getAll: (limit = 20, skip = 0) => 
+      apiRequest<NotificationsResponse>(`/notifications?limit=${limit}&skip=${skip}`),
+    getUnreadCount: () => 
+      apiRequest<NotificationCountResponse>('/notifications/unread-count'),
+    markAsRead: (id: string) => 
+      apiRequest<{ message: string; notification: Notification }>(`/notifications/${id}/read`, { 
+        method: 'PUT' 
+      }),
+    markAllAsRead: () => 
+      apiRequest<{ message: string; modifiedCount: number }>('/notifications/mark-all-read', { 
+        method: 'PUT' 
+      }),
+    getPreferences: () => 
+      apiRequest<NotificationPreferencesResponse>('/notifications/preferences'),
+    updatePreferences: (data: { 
+      email?: Partial<NotificationPreferences['email']>, 
+      inApp?: Partial<NotificationPreferences['inApp']> 
+    }) => 
+      apiRequest<NotificationPreferencesResponse>('/notifications/preferences', { 
+        method: 'PUT', 
+        body: data 
+      })
   }
 };

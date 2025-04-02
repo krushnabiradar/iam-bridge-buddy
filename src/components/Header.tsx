@@ -1,66 +1,33 @@
 
-import { Link } from "react-router-dom";
-import { ThemeToggle } from "./ThemeToggle";
-import { Button } from "./ui/button";
-import { useAuth } from "@/context/AuthContext";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { LogOut, Settings, User } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { NavBar } from './NavBar';
+import { ThemeToggle } from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between py-4">
-        <div className="flex gap-6 md:gap-10">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="hidden font-bold sm:inline-block">Identity Access Management</span>
-          </Link>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    {user.name?.charAt(0)}
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="flex items-center">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard" className="flex items-center">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button asChild variant="default" size="sm">
-              <Link to="/auth">Login</Link>
-            </Button>
-          )}
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center">
+        <Link to="/" className="flex items-center gap-2 font-semibold mr-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.688h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+            <circle cx="7.5" cy="11.5" r="1.5"></circle>
+            <circle cx="12" cy="7.5" r="1.5"></circle>
+            <circle cx="16.5" cy="11.5" r="1.5"></circle>
+          </svg>
+          <span className="hidden sm:inline-block">IAM System</span>
+        </Link>
+        <NavBar className="mx-6" />
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+          </div>
+          <div className="flex items-center gap-2">
+            {isAuthenticated && <NotificationBell />}
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </header>

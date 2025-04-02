@@ -9,6 +9,7 @@ const passport = require('./config/passport');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const iamRoutes = require('./routes/iam.routes');
+const notificationRoutes = require('./routes/notification.routes');
 const initRoles = require('./scripts/initRoles');
 
 const app = express();
@@ -42,6 +43,7 @@ app.use(passport.session());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/iam', iamRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Default route
 app.get('/', (req, res) => {

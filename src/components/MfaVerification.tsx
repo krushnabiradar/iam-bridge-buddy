@@ -147,7 +147,8 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     
     setIsVerifying(true);
     try {
-      await api.auth.verifyMfa(email, token);
+      // Adding an empty string for password and false for remember since we're just verifying the token
+      await api.auth.verifyMfa(email, '', token, false);
       toast.success('MFA verified successfully');
       onSuccess();
     } catch (error) {

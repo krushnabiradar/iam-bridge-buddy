@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Copy, Terminal, Smartphone } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -234,7 +235,7 @@ const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
                   Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
                 </p>
                 <div className="bg-white p-3 rounded-lg">
-                  {qrCodeUrl && <QRCode value={qrCodeUrl} size={200} />}
+                  {qrCodeUrl && <QRCodeSVG value={qrCodeUrl} size={200} />}
                 </div>
               </div>
             </TabsContent>

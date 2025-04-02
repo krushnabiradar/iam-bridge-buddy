@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from 'next-themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
@@ -14,6 +14,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import UserManagement from './pages/admin/UserManagement';
 import RoleManagement from './pages/admin/RoleManagement';
 import NotFound from './pages/NotFound';
+import { useAuth } from './context/AuthContext';
 
 import './App.css';
 
@@ -28,6 +29,17 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Protected route component to redirect authenticated users
+const ProtectedIndex = () => {
+  const { isAuthenticated } = useAuth();
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <Index />;
+};
 
 function App() {
   return (
@@ -49,7 +61,7 @@ function App() {
                 <Header />
                 <div className="flex-1">
                   <Routes>
-                    <Route path="/" element={<Index />} />
+                    <Route path="/" element={<ProtectedIndex />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/profile" element={<Profile />} />

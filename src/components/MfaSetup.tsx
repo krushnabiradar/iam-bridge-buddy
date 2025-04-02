@@ -1,241 +1,320 @@
 
-import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, AlertTriangle, CheckCircle, QrCode } from 'lucide-react';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import QRCode from 'qrcode.react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Copy, Terminal, Smartphone } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
 
-const MfaSetup = () => {
-  const { user, updateUserData } = useAuth();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [mfaEnabled, setMfaEnabled] = useState(user?.mfaEnabled || false);
-  const [showSetup, setShowSetup] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [secretKey, setSecretKey] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
+interface MfaSetupProps {
+  onSetupComplete?: () => void;
+  onCancel?: () => void;
+}
 
-  // Fetch MFA status on component mount
+// OTP input component
+interface OTPDigitInputProps {
+  index: number;
+  isActive: boolean;
+  char: string;
+  hasFakeCaret: boolean;
+  onCharChange: (index: number, char: string) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>, index: number) => void;
+  onFocus: (index: number) => void;
+}
+
+const OTPDigitInput: React.FC<OTPDigitInputProps> = ({
+  index,
+  isActive,
+  char,
+  hasFakeCaret,
+  onCharChange,
+  onKeyDown,
+  onFocus,
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  
   useEffect(() => {
-    if (user?.id) {
-      setMfaEnabled(user.mfaEnabled || false);
+    if (isActive && inputRef.current) {
+      inputRef.current.focus();
     }
-  }, [user]);
-
-  const handleGenerateSecret = async () => {
-    setIsLoading(true);
-    try {
-      const response = await api.auth.generateMfaSecret();
-      setQrCodeUrl(response.qrCodeUrl);
-      setSecretKey(response.secretKey);
-      setShowSetup(true);
-    } catch (error) {
-      console.error('Error generating MFA secret:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate MFA setup. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyAndEnable = async () => {
-    if (!verificationCode || verificationCode.length !== 6) {
-      toast({
-        title: "Invalid Code",
-        description: "Please enter a valid 6-digit verification code.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await api.auth.enableMfa(verificationCode);
-      setMfaEnabled(true);
-      
-      // Update user data with MFA status
-      if (user) {
-        updateUserData({
-          ...user,
-          mfaEnabled: true
-        });
-      }
-      
-      toast({
-        title: "MFA Enabled",
-        description: "Multi-factor authentication has been enabled for your account.",
-      });
-      setShowSetup(false);
-    } catch (error) {
-      console.error('Error enabling MFA:', error);
-      toast({
-        title: "Verification Failed",
-        description: "The code you entered is incorrect. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDisableMfa = async () => {
-    setIsLoading(true);
-    try {
-      await api.auth.disableMfa();
-      setMfaEnabled(false);
-      
-      // Update user data with MFA status
-      if (user) {
-        updateUserData({
-          ...user,
-          mfaEnabled: false
-        });
-      }
-      
-      toast({
-        title: "MFA Disabled",
-        description: "Multi-factor authentication has been disabled for your account.",
-      });
-    } catch (error) {
-      console.error('Error disabling MFA:', error);
-      toast({
-        title: "Error",
-        description: "Failed to disable MFA. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [isActive]);
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Multi-Factor Authentication</CardTitle>
-        <CardDescription>
-          Secure your account with an additional layer of protection by enabling two-factor authentication.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {!showSetup ? (
-          <div className="flex items-center justify-between py-4">
-            <div>
-              <h3 className="font-medium">Two-Factor Authentication</h3>
-              <p className="text-sm text-muted-foreground">
-                {mfaEnabled 
-                  ? "Your account is protected with 2FA" 
-                  : "Add an extra layer of security to your account"}
-              </p>
-            </div>
-            <Switch
-              checked={mfaEnabled}
-              disabled={isLoading}
-              onCheckedChange={() => {
-                if (mfaEnabled) {
-                  handleDisableMfa();
-                } else {
-                  handleGenerateSecret();
-                }
-              }}
-            />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Important</AlertTitle>
-              <AlertDescription>
-                Scan the QR code with your authenticator app or enter the secret key manually.
-                Keep your recovery codes in a safe place.
-              </AlertDescription>
-            </Alert>
+    <div 
+      className={`relative w-10 h-14 flex items-center justify-center border-2 ${
+        isActive ? 'border-primary' : 'border-input'
+      } rounded-md bg-background`}
+      onClick={() => onFocus(index)}
+    >
+      <input
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        maxLength={1}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        value={char}
+        onChange={(e) => {
+          const val = e.target.value;
+          if (/^[0-9]?$/.test(val)) {
+            onCharChange(index, val);
+          }
+        }}
+        onKeyDown={(e) => onKeyDown(e, index)}
+        onFocus={() => onFocus(index)}
+      />
+      <div className="text-xl font-medium">
+        {char}
+        {hasFakeCaret && isActive && (
+          <div className="absolute bottom-2.5 w-[1px] h-[60%] bg-primary animate-blink"></div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Main component
+const MfaSetup: React.FC<MfaSetupProps> = ({ onSetupComplete, onCancel }) => {
+  const [step, setStep] = useState<'generate' | 'verify'>('generate');
+  const [isLoading, setIsLoading] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [secret, setSecret] = useState('');
+  const [activeTab, setActiveTab] = useState<'app' | 'manual'>('app');
+  
+  // OTP input state
+  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [activeInput, setActiveInput] = useState(0);
+  const [hasFakeCaret, setHasFakeCaret] = useState(true);
+  
+  // Handle QR code generation on mount
+  useEffect(() => {
+    generateQrCode();
+  }, []);
+  
+  const generateQrCode = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.mfa.setupMfa();
+      setQrCodeUrl(response.qrCodeUrl);
+      setSecret(response.secret);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      toast.error('Failed to generate MFA setup. Please try again.');
+      setIsLoading(false);
+    }
+  };
+  
+  const verifyMfa = async () => {
+    const token = otpCode.join('');
+    if (token.length !== 6) {
+      toast.error('Please enter a 6-digit verification code');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      await api.mfa.enableMfa(token);
+      toast.success('MFA successfully enabled for your account');
+      if (onSetupComplete) {
+        onSetupComplete();
+      }
+    } catch (error) {
+      console.error('Error verifying MFA token:', error);
+      toast.error('Invalid verification code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const copySecretToClipboard = () => {
+    navigator.clipboard.writeText(secret);
+    toast.success('Secret key copied to clipboard');
+  };
+  
+  // OTP input handlers
+  const handleCharChange = (index: number, char: string) => {
+    const newOtpCode = [...otpCode];
+    newOtpCode[index] = char;
+    setOtpCode(newOtpCode);
+    
+    // Auto-advance to next input if character was entered
+    if (char && index < 5) {
+      setActiveInput(index + 1);
+    }
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    // Handle backspace to clear current field and move to previous
+    if (e.key === 'Backspace') {
+      if (otpCode[index]) {
+        const newOtpCode = [...otpCode];
+        newOtpCode[index] = '';
+        setOtpCode(newOtpCode);
+      } else if (index > 0) {
+        setActiveInput(index - 1);
+      }
+    }
+    // Handle left arrow key
+    else if (e.key === 'ArrowLeft' && index > 0) {
+      setActiveInput(index - 1);
+    }
+    // Handle right arrow key
+    else if (e.key === 'ArrowRight' && index < 5) {
+      setActiveInput(index + 1);
+    }
+    // Handle paste event
+    else if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      navigator.clipboard.readText().then(text => {
+        const pastedDigits = text.trim().replace(/\D/g, '').substring(0, 6).split('');
+        const newOtpCode = [...otpCode];
+        
+        pastedDigits.forEach((digit, i) => {
+          if (i < 6) {
+            newOtpCode[i] = digit;
+          }
+        });
+        
+        setOtpCode(newOtpCode);
+        if (pastedDigits.length === 6) {
+          // Focus on the last input after pasting a complete code
+          setActiveInput(5);
+        } else if (pastedDigits.length > 0) {
+          // Focus on the next empty input
+          setActiveInput(Math.min(pastedDigits.length, 5));
+        }
+      });
+    }
+  };
+  
+  const renderOtpInputs = () => {
+    return (
+      <div className="flex gap-2 justify-center my-4">
+        {otpCode.map((char, i) => (
+          <OTPDigitInput
+            key={i}
+            index={i}
+            isActive={activeInput === i}
+            char={char}
+            hasFakeCaret={hasFakeCaret}
+            onCharChange={handleCharChange}
+            onKeyDown={handleKeyDown}
+            onFocus={(index) => setActiveInput(index)}
+          />
+        ))}
+      </div>
+    );
+  };
+  
+  if (isLoading && !qrCodeUrl) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <p className="text-center text-muted-foreground">
+          Generating your MFA setup...
+        </p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="w-full max-w-md mx-auto">
+      {step === 'generate' && (
+        <div className="space-y-6">
+          <h2 className="text-lg font-semibold text-center">
+            Set up Two-Factor Authentication
+          </h2>
+          <p className="text-muted-foreground text-center">
+            Enhance your account security by setting up two-factor authentication with an authenticator app.
+          </p>
+          
+          <Tabs value={activeTab} onValueChange={(t) => setActiveTab(t as 'app' | 'manual')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="app">
+                <Smartphone className="h-4 w-4 mr-2" />
+                QR Code
+              </TabsTrigger>
+              <TabsTrigger value="manual">
+                <Terminal className="h-4 w-4 mr-2" />
+                Manual Entry
+              </TabsTrigger>
+            </TabsList>
             
-            {qrCodeUrl && (
-              <div className="flex flex-col items-center justify-center space-y-4">
-                <div className="border p-4 rounded-lg bg-white">
-                  <img src={qrCodeUrl} alt="QR Code for MFA" className="w-48 h-48" />
-                </div>
-                
-                <div className="w-full">
-                  <p className="text-sm font-medium mb-1">Secret Key</p>
-                  <div className="flex">
-                    <code className="p-2 bg-muted rounded text-sm flex-1 font-mono overflow-x-auto">
-                      {secretKey}
-                    </code>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="ml-2"
-                      onClick={() => {
-                        navigator.clipboard.writeText(secretKey);
-                        toast({
-                          title: "Copied",
-                          description: "Secret key copied to clipboard",
-                        });
-                      }}
-                    >
-                      <QrCode className="h-4 w-4" />
-                    </Button>
-                  </div>
+            <TabsContent value="app" className="pt-4">
+              <div className="flex flex-col items-center justify-center p-4 border rounded-lg bg-muted/30">
+                <p className="text-sm text-muted-foreground mb-4 text-center">
+                  Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+                </p>
+                <div className="bg-white p-3 rounded-lg">
+                  {qrCodeUrl && <QRCode value={qrCodeUrl} size={200} />}
                 </div>
               </div>
-            )}
+            </TabsContent>
             
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Verification Code</p>
-              <InputOTP 
-                maxLength={6}
-                value={verificationCode}
-                onChange={setVerificationCode}
-                render={({ slots }) => (
-                  <InputOTPGroup>
-                    {slots.map((slot, index) => (
-                      <InputOTPSlot key={index} {...slot} />
-                    ))}
-                  </InputOTPGroup>
-                )}
-              />
-              <p className="text-xs text-muted-foreground">
-                Enter the 6-digit code from your authenticator app
-              </p>
-            </div>
+            <TabsContent value="manual" className="pt-4">
+              <div className="flex flex-col p-4 border rounded-lg bg-muted/30">
+                <p className="text-sm text-muted-foreground mb-4">
+                  If you can't scan the QR code, enter this code manually in your authenticator app:
+                </p>
+                <div className="flex items-center justify-between p-3 bg-muted rounded-lg mb-2">
+                  <code className="text-sm font-mono">{secret}</code>
+                  <Button variant="ghost" size="icon" onClick={copySecretToClipboard}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  In your authenticator app, select "Enter setup key" and enter the key above.
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button onClick={() => setStep('verify')}>
+              Continue
+            </Button>
           </div>
-        )}
-      </CardContent>
-      
-      {showSetup && (
-        <CardFooter className="flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowSetup(false)}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleVerifyAndEnable}
-            disabled={isLoading || verificationCode.length !== 6}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              "Enable 2FA"
-            )}
-          </Button>
-        </CardFooter>
+        </div>
       )}
-    </Card>
+      
+      {step === 'verify' && (
+        <div className="space-y-6">
+          <h2 className="text-lg font-semibold text-center">
+            Verify Two-Factor Authentication
+          </h2>
+          <p className="text-muted-foreground text-center">
+            Enter the 6-digit verification code from your authenticator app to complete setup.
+          </p>
+          
+          {renderOtpInputs()}
+          
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={() => setStep('generate')}>
+              Back
+            </Button>
+            <Button 
+              onClick={verifyMfa} 
+              disabled={isLoading || otpCode.join('').length !== 6}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                'Verify & Enable'
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

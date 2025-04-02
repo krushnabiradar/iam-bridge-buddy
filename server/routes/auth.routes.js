@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const authController = require('../controllers/auth.controller');
+const mfaController = require('../controllers/mfa.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 
 // Register new user
@@ -18,6 +19,12 @@ router.post('/logout', authController.logout);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/verify-otp', authController.verifyOtp);
 router.post('/reset-password', authController.resetPassword);
+
+// MFA routes
+router.get('/mfa/setup', authenticate, mfaController.setupMfa);
+router.post('/mfa/enable', authenticate, mfaController.enableMfa);
+router.post('/mfa/disable', authenticate, mfaController.disableMfa);
+router.post('/mfa/verify', mfaController.verifyMfa);
 
 // Google OAuth routes
 router.get('/google',
@@ -49,4 +56,3 @@ router.post('/sso', authController.ssoLogin);
 router.get('/verify-token', authenticate, authController.verifyToken);
 
 module.exports = router;
-

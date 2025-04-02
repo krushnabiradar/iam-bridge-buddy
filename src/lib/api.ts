@@ -1,4 +1,3 @@
-
 // Import the response types before they're used
 import { RolesResponse, PermissionsResponse, UsersResponse } from '@/types/api.types';
 
@@ -16,8 +15,10 @@ export interface AuthResponse {
     roles?: any[];
     isActive?: boolean;
     lastLogin?: string;
+    mfaEnabled?: boolean;
   };
   token: string;
+  requiresMfa?: boolean;
 }
 
 interface ApiOptions {
@@ -173,6 +174,24 @@ export const api = {
       apiRequest<{ message: string }>('/auth/reset-password', { 
         method: 'POST', 
         body: { email, password } 
+      }),
+    generateMfaSecret: () => 
+      apiRequest<{ message: string, qrCodeUrl: string, secretKey: string }>('/auth/mfa/setup', { 
+        method: 'GET' 
+      }),
+    enableMfa: (verificationCode: string) => 
+      apiRequest<{ message: string, success: boolean }>('/auth/mfa/enable', { 
+        method: 'POST', 
+        body: { verificationCode } 
+      }),
+    disableMfa: () => 
+      apiRequest<{ message: string, success: boolean }>('/auth/mfa/disable', { 
+        method: 'POST' 
+      }),
+    verifyMfa: (email: string, password: string, verificationCode: string, remember: boolean = false) => 
+      apiRequest<AuthResponse>('/auth/mfa/verify', { 
+        method: 'POST', 
+        body: { email, password, verificationCode, remember } 
       }),
   },
   user: {

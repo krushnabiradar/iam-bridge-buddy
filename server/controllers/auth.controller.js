@@ -106,6 +106,21 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Check if MFA is enabled
+    if (user.mfaEnabled) {
+      return res.status(200).json({
+        message: 'MFA verification required',
+        requiresMfa: true,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email
+        }
+      });
+    }
+
+    // Normal login flow if MFA is not enabled
+    
     // Update last login
     user.lastLogin = Date.now();
     await user.save();
@@ -123,6 +138,7 @@ exports.login = async (req, res) => {
     // Return user data (excluding password)
     const userData = user.toObject();
     delete userData.password;
+    delete userData.mfaSecret;
 
     res.status(200).json({
       message: 'Login successful',

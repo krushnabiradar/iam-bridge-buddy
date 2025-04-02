@@ -15,13 +15,14 @@ interface User {
   lastLogin?: string;
   createdAt?: string;
   updatedAt?: string;
+  mfaEnabled?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, remember?: boolean) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<{ requiresMfa?: boolean }>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   socialLogin: (provider: string) => Promise<void>;
@@ -143,6 +144,12 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setIsLoading(true);
     try {
       const response = await api.auth.login(email, password);
+      
+      if (response.requiresMfa) {
+        setIsLoading(false);
+        return { requiresMfa: true };
+      }
+      
       setUser(response.user);
       
       const userWithTimestamp = {
@@ -154,6 +161,7 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
       localStorage.setItem('auth-token', response.token);
       toast.success("Logged in successfully");
+      return {};
     } catch (error) {
       console.error('Login failed:', error);
       toast.error("Login failed. Please check your credentials.");

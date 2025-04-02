@@ -45,6 +45,18 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  // MFA fields
+  mfaEnabled: {
+    type: Boolean,
+    default: false
+  },
+  mfaSecret: {
+    type: String
+  },
+  mfaTemp: {
+    secret: String,
+    createdAt: Date
+  },
   createdAt: {
     type: Date,
     default: Date.now

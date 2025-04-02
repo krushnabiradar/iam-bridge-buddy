@@ -78,9 +78,7 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         toast.success("Social login successful");
         window.history.replaceState({}, document.title, window.location.pathname);
         
-        if (location.pathname === '/auth') {
-          navigate('/dashboard');
-        }
+        navigate('/dashboard');
         return;
       }
       
@@ -161,6 +159,7 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
       localStorage.setItem('auth-token', response.token);
       toast.success("Logged in successfully");
+      navigate('/dashboard');
       return {};
     } catch (error) {
       console.error('Login failed:', error);
@@ -186,6 +185,7 @@ const NavigationAwareAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       localStorage.setItem('iam-user', JSON.stringify(userWithTimestamp));
       localStorage.setItem('auth-token', response.token);
       toast.success("Account created successfully");
+      navigate('/dashboard');
     } catch (error) {
       console.error('Registration failed:', error);
       toast.error("Registration failed. Please try again.");

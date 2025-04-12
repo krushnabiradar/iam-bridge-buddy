@@ -1,5 +1,13 @@
+
 // Import the response types before they're used
 import { RolesResponse, PermissionsResponse, UsersResponse } from '@/types/api.types';
+import { 
+  Notification, 
+  NotificationPreferences, 
+  NotificationCountResponse, 
+  NotificationsResponse, 
+  NotificationPreferencesResponse 
+} from '@/types/notification.types';
 
 // API utility for interacting with the backend
 export const API_BASE_URL = 'http://localhost:5000/api';

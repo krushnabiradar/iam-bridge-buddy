@@ -1,7 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { NavBar } from './NavBar';
+import NavBar from './NavBar';
 import { ThemeToggle } from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 

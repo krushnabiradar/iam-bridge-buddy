@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -14,8 +13,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Menu, X } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { cn } from '@/lib/utils';
 
-const NavBar: React.FC = () => {
+interface NavBarProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+const NavBar: React.FC<NavBarProps> = ({ className, ...props }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -40,7 +42,10 @@ const NavBar: React.FC = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-border z-50 animate-fade-in">
+    <nav 
+      className={cn("fixed top-0 left-0 right-0 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-border z-50 animate-fade-in", className)} 
+      {...props}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -49,7 +54,6 @@ const NavBar: React.FC = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
           {!isMobile && (
             <div className="hidden md:block">
               <div className="flex items-center space-x-4">
@@ -122,9 +126,8 @@ const NavBar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile menu button and dropdown */}
           <div className="md:hidden flex items-center space-x-2">
-            <ThemeToggle /> {/* Add ThemeToggle to mobile layout */}
+            <ThemeToggle />
             
             {isAuthenticated && (
               <Button
@@ -190,7 +193,6 @@ const NavBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isMobile && mobileMenuOpen && (
         <div className="md:hidden bg-white/95 dark:bg-background/95 backdrop-blur-sm border-b border-border animate-slide-down">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">

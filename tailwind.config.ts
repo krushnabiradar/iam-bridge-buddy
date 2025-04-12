@@ -62,12 +62,48 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground, var(--accent-foreground)))',
 					border: 'hsl(var(--sidebar-border, var(--border)))',
 					ring: 'hsl(var(--sidebar-ring, var(--ring)))'
+				},
+				info: {
+					DEFAULT: 'hsl(210 100% 50%)',
+					foreground: 'hsl(0 0% 100%)'
+				},
+				success: {
+					DEFAULT: 'hsl(142 76% 36%)',
+					foreground: 'hsl(0 0% 100%)'
+				},
+				warning: {
+					DEFAULT: 'hsl(38 92% 50%)',
+					foreground: 'hsl(0 0% 100%)'
 				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			boxShadow: {
+				'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+				'card': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+				'elevation': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.01)',
+			},
+			typography: {
+				DEFAULT: {
+					css: {
+						maxWidth: '65ch',
+						color: 'var(--foreground)',
+						a: {
+							color: 'var(--primary)',
+							textDecoration: 'underline',
+							'&:hover': {
+								opacity: '0.8',
+							},
+						},
+						'h1, h2, h3, h4, h5, h6': {
+							color: 'var(--foreground)',
+							fontWeight: '600',
+						},
+					},
+				},
 			},
 			keyframes: {
 				'accordion-down': {
@@ -105,6 +141,14 @@ export default {
 				'pulse-soft': {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.8' }
+				},
+				'spin-slow': {
+					'0%': { transform: 'rotate(0deg)' },
+					'100%': { transform: 'rotate(360deg)' }
+				},
+				'bounce-subtle': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' }
 				}
 			},
 			animation: {
@@ -116,7 +160,9 @@ export default {
 				'slide-down': 'slide-down 0.4s ease-out',
 				'scale-in': 'scale-in 0.3s ease-out',
 				'float': 'float 6s ease-in-out infinite',
-				'pulse-soft': 'pulse-soft 3s ease-in-out infinite'
+				'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
+				'spin-slow': 'spin-slow 8s linear infinite',
+				'bounce-subtle': 'bounce-subtle 2s ease-in-out infinite'
 			},
 			backdropFilter: {
 				'none': 'none',
